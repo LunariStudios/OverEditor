@@ -1,6 +1,6 @@
 [submodule "thirdparty/CascLib"]
 	path = thirdparty/CascLib
 	url = https://github.com/ladislav-zezula/CascLib.git
-[submodule "thirdparty/Vulkan-Hpp"]
-	path = thirdparty/Vulkan-Hpp
-	url = https://github.com/KhronosGroup/Vulkan-Hpp
+[submodule "thirdparty\\plog"]
+	path = thirdparty\\plog
+	url = https://github.com/SergiusTheBest/plog

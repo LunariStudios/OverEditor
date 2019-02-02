@@ -20,6 +20,7 @@ namespace overeditor {
 
     private:
         VkInstance instance;
+        VkDevice device;
     public:
     };
 }

@@ -2,8 +2,7 @@ cmake_minimum_required(VERSION 3.12)
 project(OverEditor CXX)
 
 set(CMAKE_CXX_STANDARD 17)
-set(CASC_BUILD_STATIC_LIB ON)
-set(CASC_BUILD_SHARED_LIB OFF)
+# Load submodules
 add_subdirectory(thirdparty)
 
 set(OVEREDITOR_VERSION_MAJOR 0)

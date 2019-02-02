@@ -5,11 +5,11 @@ add_executable(overeditor
         src/overeditor/application.cpp
         include/overeditor/ui/rect.h
         include/overeditor/ui/panel.h
-        )
+        include/overeditor/utility/string_utility.h include/overeditor/utility/memory_utility.h)
 find_package(Vulkan REQUIRED)
 
 get_target_property(VK_IDIR Vulkan::Vulkan INTERFACE_INCLUDE_DIRECTORIES)
-target_link_libraries(overeditor casc_static Vulkan::Vulkan)
+target_link_libraries(overeditor casc_static Vulkan::Vulkan plog)
 target_include_directories(
         overeditor
         PUBLIC
