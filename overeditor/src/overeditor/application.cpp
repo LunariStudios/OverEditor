@@ -1,12 +1,16 @@
 #include <overeditor/application.h>
 #include <overeditor/utility/string_utility.h>
 #include <overeditor/utility/memory_utility.h>
+#include <overeditor/graphics/queue_families.h>
+
 #include <vulkan/vulkan.hpp>
 #include <iostream>
 
 #include <plog/Log.h>
 #include <plog/Appenders/ColorConsoleAppender.h>
 
+
+#define QUEUE_FAMILY_BIT_LOG(bit, name, flags) INDENTATION(3) << "* " << name << ": " << ((flags & bit) == (vk::QueueFlags) bit ? "present" : "absent")
 namespace overeditor {
     Application::Application() {
         static plog::ColorConsoleAppender<plog::TxtFormatterUtcTime> consoleAppender;
@@ -21,6 +25,7 @@ namespace overeditor {
         auto createInfo = vk::InstanceCreateInfo((vk::InstanceCreateFlags) 0, &appInfo);
         instance = vk::createInstance(createInfo);
         uint32_t totalDevices;
+
         vkEnumeratePhysicalDevices(instance, &totalDevices, nullptr);
 
         if (totalDevices <= 0) {
@@ -56,11 +61,55 @@ namespace overeditor {
         }
         auto physicalDevice = vk::PhysicalDevice(devices[best]);
         LOG_INFO << "Using device #" << best << " (" << deviceName << ")";
-        device = physicalDevice.createDevice(vk::DeviceCreateInfo());
+        auto properties = physicalDevice.getQueueFamilyProperties();
+        LOG_INFO << "Device queue families (" << properties.size() << ")";
+        overeditor::graphics::QueueFamilyIndices indices;
+        for (uint32_t i = 0; i < properties.size(); ++i) {
+            vk::QueueFamilyProperties &prop = properties[i];
+            LOG_INFO << INDENTATION(1) << "Queue family #" << i << ":";
+            LOG_INFO << INDENTATION(2) << "Flags: " << (uint32_t) prop.queueFlags;
+            auto a = prop.queueFlags & vk::QueueFlagBits::eCompute;
+            LOG_INFO << QUEUE_FAMILY_BIT_LOG(vk::QueueFlagBits::eCompute, "Compute", prop.queueFlags);
+            LOG_INFO << QUEUE_FAMILY_BIT_LOG(vk::QueueFlagBits::eGraphics, "Graphics", prop.queueFlags);
+            LOG_INFO << QUEUE_FAMILY_BIT_LOG(vk::QueueFlagBits::eTransfer, "Transfer", prop.queueFlags);
+            LOG_INFO << QUEUE_FAMILY_BIT_LOG(vk::QueueFlagBits::eProtected, "Protected", prop.queueFlags);
+            LOG_INFO << QUEUE_FAMILY_BIT_LOG(vk::QueueFlagBits::eSparseBinding, "Sparse binding", prop.queueFlags);
+            LOG_INFO << INDENTATION(2) << "Count: " << prop.queueCount;
+            indices.offer(i, prop);
+        }
+        LOG_INFO << "Family indices are:";
+        const graphics::QueueFamily &graphics = indices.getGraphics();
+        LOG_INFO << INDENTATION(1) << "Graphics: " << graphics;
+        std::vector<vk::DeviceQueueCreateInfo> createQueueInfos;
+        uint32_t graphicsIndex;
+        if (!graphics.tryGet(&graphicsIndex)) {
+            throw std::runtime_error("Couldn't find graphics queue");
+        }
+        createQueueInfos.emplace_back((vk::DeviceQueueCreateFlags) 0, graphicsIndex, 1);
+        try {
+            auto f = vk::DeviceCreateInfo(
+                    (vk::DeviceCreateFlags) 0,
+                    createQueueInfos.size(), createQueueInfos.data()
+            );
+            device = physicalDevice.createDevice(f);
+        } catch (std::exception &e) {
+            LOG_FATAL << "Error while creating logical device: " << e.what();
+            throw e;
+        }
+        graphicsQueue = device.getQueue(graphicsIndex, 0);
     }
 
     Application::~Application() {
-        vkDestroyInstance(instance, nullptr);
+        instance.destroy();
+        device.destroy();
 
+    }
+
+    void Application::run() {
+        while (running) {
+            //TODO: Variable delta time
+            const float deltaTime = 1.0F / 60;
+            sceneTick(deltaTime);
+        }
     }
 }

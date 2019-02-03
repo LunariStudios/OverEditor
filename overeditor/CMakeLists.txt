@@ -5,7 +5,9 @@ add_executable(overeditor
         src/overeditor/application.cpp
         include/overeditor/ui/rect.h
         include/overeditor/ui/panel.h
-        include/overeditor/utility/string_utility.h include/overeditor/utility/memory_utility.h)
+        include/overeditor/utility/string_utility.h
+        include/overeditor/utility/memory_utility.h
+        include/overeditor/graphics/queue_families.h src/overeditor/graphics/queue_families.cpp)
 find_package(Vulkan REQUIRED)
 
 get_target_property(VK_IDIR Vulkan::Vulkan INTERFACE_INCLUDE_DIRECTORIES)

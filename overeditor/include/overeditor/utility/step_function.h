@@ -4,33 +4,52 @@
 #include <functional>
 
 namespace overeditor::utility {
-    template<typename ...T>
-    class StepFunction {
+    template<typename... T>
+    class Event {
     public:
-        typedef std::function<void(T...)> Listener;
-        typedef std::vector<Listener> ListenerHandler;
+        typedef std::function<void(T...)> EventListener;
     private:
-        static void notify(const ListenerHandler &handler, T... values);
-
-        std::vector<Listener> earlyListeners, lateListeners;
+        std::vector<EventListener *> listeners;
     public:
-        void operator()(T... values);
+
+        void operator+=(EventListener *listener) {
+            listeners.push_back(listener);
+        }
+
+        void operator-=(EventListener *listener) {
+            listeners.erase(std::remove(listeners.begin(), listeners.end(), listener));
+        }
+
+        void operator()(T... args) {
+            for (EventListener *listener : listeners) {
+                listener->operator()(args...);
+            }
+        }
     };
 
     template<typename ...T>
-    void StepFunction<T...>::operator()(T... values) {
-        notify(earlyListeners, ...
-        values);
-        notify(lateListeners, ...
-        values);
-    }
+    class StepFunction {
+    private:
+        Event<T...> earlyStep;
+        Event<T...> lateStep;
+    public:
+        StepFunction() : earlyStep(), lateStep() {
 
-    template<typename ...T>
-    void StepFunction<T...>::notify(const StepFunction::ListenerHandler &handler, T... values) {
-        for (Listener l : handler) {
-            l(...
-            values);
         }
-    }
+
+        Event<T...> &getEarlyStep() {
+            return earlyStep;
+        }
+
+        Event<T...> &getLateStep() {
+            return lateStep;
+
+        }
+
+        void operator()(T... params) {
+            earlyStep(params...);
+            lateStep(params...);
+        }
+    };
 }
 #endif //OVEREDITOR_STEPFUNCTION_H
