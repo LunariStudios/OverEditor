@@ -25,6 +25,7 @@ namespace overeditor::graphics {
         return os;
     }
 
+
     void QueueFamilyIndices::offer(uint32_t index, const vk::QueueFamilyProperties &properties) {
         graphics.offer(index, properties);
     }

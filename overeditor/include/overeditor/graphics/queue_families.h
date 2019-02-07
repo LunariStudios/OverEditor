@@ -4,6 +4,7 @@
 #include <optional>
 #include <vulkan/vulkan.hpp>
 #include <ostream>
+#include <functional>
 
 namespace overeditor::graphics {
     class QueueFamily {

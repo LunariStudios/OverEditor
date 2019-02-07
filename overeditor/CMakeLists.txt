@@ -7,11 +7,11 @@ add_executable(overeditor
         include/overeditor/ui/panel.h
         include/overeditor/utility/string_utility.h
         include/overeditor/utility/memory_utility.h
-        include/overeditor/graphics/queue_families.h src/overeditor/graphics/queue_families.cpp)
+        include/overeditor/graphics/queue_families.h src/overeditor/graphics/queue_families.cpp include/overeditor/graphics/querying.h src/overeditor/graphics/querying.cpp)
 find_package(Vulkan REQUIRED)
 
 get_target_property(VK_IDIR Vulkan::Vulkan INTERFACE_INCLUDE_DIRECTORIES)
-target_link_libraries(overeditor casc_static Vulkan::Vulkan plog)
+target_link_libraries(overeditor casc_static Vulkan::Vulkan plog glfw)
 target_include_directories(
         overeditor
         PUBLIC

@@ -4,6 +4,7 @@
 #include <overeditor/utility/step_function.h>
 #include <vulkan/vulkan.h>
 #include <vulkan/vulkan.hpp>
+#include <GLFW/glfw3.h>
 
 /**
  * The current version of OverEditor.
@@ -23,6 +24,7 @@ namespace overeditor {
         vk::Queue graphicsQueue;
         bool running;
         utility::StepFunction<float> sceneTick;
+        GLFWwindow * window;
     public:
         Application();
 

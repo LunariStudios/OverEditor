@@ -11,6 +11,9 @@ namespace overeditor::utility {
     private:
         std::vector<EventListener *> listeners;
     public:
+        void clear() {
+            listeners.clear();
+        }
 
         void operator+=(EventListener *listener) {
             listeners.push_back(listener);
@@ -35,6 +38,11 @@ namespace overeditor::utility {
     public:
         StepFunction() : earlyStep(), lateStep() {
 
+        }
+
+        void clear() {
+            earlyStep.clear();
+            lateStep.clear();
         }
 
         Event<T...> &getEarlyStep() {

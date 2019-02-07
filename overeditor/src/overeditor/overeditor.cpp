@@ -3,5 +3,5 @@
 #include <plog/Log.h>
 
 int main() {
-    overeditor::Application app;
+    overeditor::Application().run();
 }
