@@ -1,9 +1,9 @@
 [submodule "thirdparty/CascLib"]
 	path = thirdparty/CascLib
 	url = https://github.com/ladislav-zezula/CascLib.git
-[submodule "thirdparty\\plog"]
-	path = thirdparty\\plog
+[submodule "thirdparty/plog"]
+	path = thirdparty/plog
 	url = https://github.com/SergiusTheBest/plog
-[submodule "thirdparty\\glfw"]
-	path = thirdparty\\glfw
+[submodule "thirdparty/glfw"]
+	path = thirdparty/glfw
 	url = https://github.com/glfw/glfw
