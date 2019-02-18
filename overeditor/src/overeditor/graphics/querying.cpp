@@ -5,18 +5,18 @@ namespace overeditor::graphics {
     PhysicalDeviceCandidate::PhysicalDeviceCandidate(
             const vk::PhysicalDevice &device,
             const vk::SurfaceKHR &surface
-    ) : device(device), indices(), score(0), suitable(true) {
-        vk::PhysicalDeviceProperties deviceProperties = device.getProperties();
+    ) : device(device), indices(), score(0), suitable(true),
+        deviceProperties(device.getProperties()),
+        memoryProperties(device.getMemoryProperties()),
+        queueFamilyProperties(device.getQueueFamilyProperties()) {
         auto name = deviceProperties.deviceName;
         auto type = deviceProperties.deviceType;
         if (type == vk::PhysicalDeviceType::eCpu || type == vk::PhysicalDeviceType::eOther) {
-            LOG_INFO << "Device " << name << "Is of type" << (uint32_t) type;
             suitable = false;
         }
         size_t totalMemory = 0;
-        vk::PhysicalDeviceMemoryProperties m = device.getMemoryProperties();
-        for (int j = 0; j < m.memoryHeapCount; ++j) {
-            const vk::MemoryHeap &heap = m.memoryHeaps[j];
+        for (int j = 0; j < memoryProperties.memoryHeapCount; ++j) {
+            const vk::MemoryHeap &heap = memoryProperties.memoryHeaps[j];
             if ((heap.flags & vk::MemoryHeapFlagBits::eDeviceLocal) == vk::MemoryHeapFlagBits::eDeviceLocal) {
                 size_t mem = heap.size;
                 totalMemory += mem;
@@ -30,15 +30,10 @@ namespace overeditor::graphics {
             auto a = prop.queueFlags & vk::QueueFlagBits::eCompute;
             indices.offer(i, prop);
             if (!hasSurfaceExtension) {
-                LOG_INFO << "Quering for surface support @ device " << name << " @ queue #" << i << " @ "
-                         << (VkSurfaceKHR) surface;
                 vkGetPhysicalDeviceSurfaceSupportKHR(device, i, surface, &hasSurfaceExtension);
-                LOG_INFO << "Quering for surface support @ " << hasSurfaceExtension;
             }
         }
         if (!hasSurfaceExtension) {
-            LOG_INFO << "Device " << name << "Is has no sueface extension";
-
             suitable = false;
         }
     }
@@ -60,7 +55,6 @@ namespace overeditor::graphics {
     }
 
     const vk::PhysicalDeviceProperties &PhysicalDeviceCandidate::getDeviceProperties() const {
-        LOG_INFO << "Properties reside @ " << &deviceProperties;
         return deviceProperties;
     }
 
@@ -70,5 +64,9 @@ namespace overeditor::graphics {
 
     const std::vector<vk::QueueFamilyProperties> &PhysicalDeviceCandidate::getQueueFamilyProperties() const {
         return queueFamilyProperties;
+    }
+
+    const std::string PhysicalDeviceCandidate::getName() const {
+        return std::string(deviceProperties.deviceName);
     }
 }

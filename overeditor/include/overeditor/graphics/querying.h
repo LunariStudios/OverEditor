@@ -9,7 +9,7 @@
 
 namespace overeditor::graphics {
 
-#define MEMORY_SCORE_MULTIPLIER 1
+#define MEMORY_SCORE_MULTIPLIER 100
 
 #define QUEUE_FAMILY_BIT_LOG(bit, name, flags) INDENTATION(3) << "* " << name << ": " << ((flags & bit) == (vk::QueueFlags) bit ? "present" : "absent")
 
@@ -33,9 +33,7 @@ namespace overeditor::graphics {
 
         bool isSuitable() const;
 
-        const std::string getName() const {
-            return std::string(deviceProperties.deviceName);
-        }
+        const std::string getName() const;
 
         const vk::PhysicalDeviceProperties &getDeviceProperties() const;
 
