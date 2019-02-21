@@ -1,7 +1,7 @@
 #include <overeditor/graphics/queue_families.h>
 
 namespace overeditor::graphics {
-    QueueFamily::QueueFamily(vk::QueueFlagBits bit) : bit(bit) {}
+    QueueFamily::QueueFamily() : index() {}
 
     bool QueueFamily::tryGet(uint32_t *result) const {
         if (index) {
@@ -11,11 +11,6 @@ namespace overeditor::graphics {
         return false;
     }
 
-    void QueueFamily::offer(uint32_t index, const vk::QueueFamilyProperties &properties) {
-        if (!QueueFamily::index && (properties.queueFlags & bit) == bit) {
-            QueueFamily::index = index;
-        }
-    }
 
     std::ostream &operator<<(std::ostream &os, const QueueFamily &family) {
         os << (family.index ? "available" : "absent");
@@ -26,8 +21,14 @@ namespace overeditor::graphics {
     }
 
 
-    void QueueFamilyIndices::offer(uint32_t index, const vk::QueueFamilyProperties &properties) {
-        graphics.offer(index, properties);
+    void QueueFamilyIndices::offer(
+            uint32_t index,
+            const vk::QueueFamilyProperties &properties,
+            const vk::PhysicalDevice &device,
+            const vk::SurfaceKHR &surface
+    ) {
+        graphics.offer(index, properties, device, surface);
+        presentation.offer(index, properties, device, surface);
     }
 
     QueueFamilyIndices::QueueFamilyIndices() : graphics(vk::QueueFlagBits::eGraphics) {}
@@ -36,5 +37,34 @@ namespace overeditor::graphics {
         return graphics;
     }
 
+    const PresentationQueueFamily &QueueFamilyIndices::getPresentation() const {
+        return presentation;
+    }
 
+
+    void FlagBitQueueFamily::offer(uint32_t index, const vk::QueueFamilyProperties &properties,
+                                   const vk::PhysicalDevice &device, const vk::SurfaceKHR &surface) {
+        if (!FlagBitQueueFamily::index && (properties.queueFlags & bit) == bit) {
+            FlagBitQueueFamily::index = index;
+        }
+    }
+
+    bool QueueFamily::present() const {
+        return (bool) index;
+    }
+
+    FlagBitQueueFamily::FlagBitQueueFamily(vk::QueueFlagBits bit) : bit(bit) {}
+
+    void PresentationQueueFamily::offer(
+            uint32_t index,
+            const vk::QueueFamilyProperties &properties,
+            const vk::PhysicalDevice &device,
+            const vk::SurfaceKHR &surface
+    ) {
+        VkBool32 supported;
+        vkGetPhysicalDeviceSurfaceSupportKHR(device, index, surface, &supported);
+        if (supported) {
+            QueueFamily::index = index;
+        }
+    }
 }

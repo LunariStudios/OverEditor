@@ -7,7 +7,7 @@ add_executable(overeditor
         include/overeditor/ui/panel.h
         include/overeditor/utility/string_utility.h
         include/overeditor/utility/memory_utility.h
-        include/overeditor/graphics/queue_families.h src/overeditor/graphics/queue_families.cpp include/overeditor/graphics/querying.h src/overeditor/graphics/querying.cpp)
+        include/overeditor/graphics/queue_families.h src/overeditor/graphics/queue_families.cpp include/overeditor/graphics/querying.h src/overeditor/graphics/querying.cpp include/overeditor/overeditor_constants.h include/overeditor/graphics/requirements.h src/overeditor/graphics/requirements.cpp include/overeditor/utility/collection_utility.h include/overeditor/utility/success_status.h)
 find_package(Vulkan REQUIRED)
 set(CMAKE_CXX_FLAGS_DEBUG "${CMAKE_CXX_FLAGS_DEBUG} -DDEBUG")
 get_target_property(VK_IDIR Vulkan::Vulkan INTERFACE_INCLUDE_DIRECTORIES)

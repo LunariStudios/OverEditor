@@ -3,27 +3,30 @@
 
 #include <vulkan/vulkan.hpp>
 #include <overeditor/graphics/queue_families.h>
+#include <overeditor/graphics/requirements.h>
 #include <overeditor/utility/memory_utility.h>
 #include <overeditor/utility/string_utility.h>
+#include <overeditor/utility/success_status.h>
 #include <plog/Record.h>
 
 namespace overeditor::graphics {
 
 #define MEMORY_SCORE_MULTIPLIER 100
 
-#define QUEUE_FAMILY_BIT_LOG(bit, name, flags) INDENTATION(3) << "* " << name << ": " << ((flags & bit) == (vk::QueueFlags) bit ? "present" : "absent")
+#define LOG_QUEUE_FAMILY_BIT(bit, name, flags) INDENTATION(3) << "* " << name << ": " << ((flags & bit) == (vk::QueueFlags) bit ? "present" : "absent")
 
     class PhysicalDeviceCandidate {
     private:
         vk::PhysicalDevice device;
         QueueFamilyIndices indices;
         uint32_t score;
-        bool suitable;
+        overeditor::utility::SuccessStatus suitableness;
         vk::PhysicalDeviceProperties deviceProperties;
         vk::PhysicalDeviceMemoryProperties memoryProperties;
         std::vector<vk::QueueFamilyProperties> queueFamilyProperties;
     public:
-        PhysicalDeviceCandidate(const vk::PhysicalDevice &device, const vk::SurfaceKHR &surface);
+        PhysicalDeviceCandidate(const overeditor::graphics::Requirements &requirements,
+                                const vk::PhysicalDevice &device, const vk::SurfaceKHR &surface);
 
         const vk::PhysicalDevice &getDevice() const;
 
@@ -31,7 +34,7 @@ namespace overeditor::graphics {
 
         uint32_t getScore() const;
 
-        bool isSuitable() const;
+        const utility::SuccessStatus &getSuitableness() const;
 
         const std::string getName() const;
 
@@ -41,5 +44,6 @@ namespace overeditor::graphics {
 
         const std::vector<vk::QueueFamilyProperties> &getQueueFamilyProperties() const;
     };
+
 }
 #endif

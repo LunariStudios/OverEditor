@@ -8,28 +8,58 @@
 
 namespace overeditor::graphics {
     class QueueFamily {
-    private:
-        vk::QueueFlagBits bit;
+    protected:
         std::optional<uint32_t> index;
     public:
-        explicit QueueFamily(vk::QueueFlagBits bit);
+        explicit QueueFamily();
 
-        void offer(uint32_t index, const vk::QueueFamilyProperties &properties);
+        virtual void offer(uint32_t index, const vk::QueueFamilyProperties &properties,
+                           const vk::PhysicalDevice &device, const vk::SurfaceKHR &surface) = 0;
 
         bool tryGet(uint32_t *result) const;
+
+        bool present() const;
 
         friend std::ostream &operator<<(std::ostream &os, const QueueFamily &family);
     };
 
+    class FlagBitQueueFamily : public QueueFamily {
+    private:
+        vk::QueueFlagBits bit;
+    public:
+        explicit FlagBitQueueFamily(vk::QueueFlagBits bit);
+
+        void offer(
+                uint32_t index,
+                const vk::QueueFamilyProperties &properties,
+                const vk::PhysicalDevice &device,
+                const vk::SurfaceKHR &surface
+        ) override;
+    };
+
+    class PresentationQueueFamily : public QueueFamily {
+    public:
+        void offer(
+                uint32_t index,
+                const vk::QueueFamilyProperties &properties,
+                const vk::PhysicalDevice &device,
+                const vk::SurfaceKHR &surface
+        ) override;
+    };
+
     class QueueFamilyIndices {
     private:
-        QueueFamily graphics;
+        FlagBitQueueFamily graphics;
+        PresentationQueueFamily presentation;
     public:
         QueueFamilyIndices();
 
-        void offer(uint32_t index, const vk::QueueFamilyProperties &properties);
+        void offer(uint32_t index, const vk::QueueFamilyProperties &properties, const vk::PhysicalDevice &device,
+                   const vk::SurfaceKHR &surface);
 
         const QueueFamily &getGraphics() const;
+
+        const PresentationQueueFamily &getPresentation() const;
     };
 }
 #endif

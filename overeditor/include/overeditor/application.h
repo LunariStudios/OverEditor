@@ -2,6 +2,7 @@
 #define OVEREDITOR_APPLICATION_H
 
 #include <overeditor/utility/step_function.h>
+#include <overeditor/utility/success_status.h>
 #include <vulkan/vulkan.h>
 #include <vulkan/vulkan.hpp>
 #include <GLFW/glfw3.h>
@@ -21,10 +22,13 @@ namespace overeditor {
     private:
         vk::Instance instance;
         vk::Device device;
-        vk::Queue graphicsQueue;
+        vk::Queue graphicsQueue, presentationQueue;
         bool running;
         utility::StepFunction<float> sceneTick;
+        utility::SuccessStatus instanceSuitable;
         GLFWwindow * window;
+        vk::SwapchainKHR swapchain;
+        vk::SurfaceKHR surface;
     public:
         Application();
 
