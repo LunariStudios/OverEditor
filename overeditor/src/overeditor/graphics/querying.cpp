@@ -9,7 +9,8 @@ namespace overeditor::graphics {
     ) : device(device), indices(), score(0), suitableness(),
         deviceProperties(device.getProperties()),
         memoryProperties(device.getMemoryProperties()),
-        queueFamilyProperties(device.getQueueFamilyProperties()) {
+        queueFamilyProperties(device.getQueueFamilyProperties()),
+        swapchainSupportDetails(device, surface) {
         auto name = deviceProperties.deviceName;
         auto type = deviceProperties.deviceType;
         if (type == vk::PhysicalDeviceType::eCpu || type == vk::PhysicalDeviceType::eOther) {
@@ -61,7 +62,13 @@ namespace overeditor::graphics {
                 suitableness.addError(std::string("Required layer not present: ") + requiredLayer);
                 break;
             }
+        }
+        if (swapchainSupportDetails.getSurfaceFormats().empty()) {
+            suitableness.addError("There are no surface formats available");
 
+        }
+        if (swapchainSupportDetails.getPresentModes().empty()) {
+            suitableness.addError("There are no presentation modes available");
         }
     }
 
@@ -96,4 +103,30 @@ namespace overeditor::graphics {
     const utility::SuccessStatus &PhysicalDeviceCandidate::getSuitableness() const {
         return suitableness;
     }
+
+    const SwapchainSupportDetails &PhysicalDeviceCandidate::getSwapchainSupportDetails() const {
+        return swapchainSupportDetails;
+    }
+
+    SwapchainSupportDetails::SwapchainSupportDetails(const vk::PhysicalDevice &device, const vk::SurfaceKHR &surface)
+            : surfaceCapabilities(), surfaceFormats(), presentModes() {
+        vkGetPhysicalDeviceSurfaceCapabilitiesKHR(
+                device, surface, reinterpret_cast<VkSurfaceCapabilitiesKHR *>(&surfaceCapabilities)
+        );
+        overeditor::utility::vk_utility::enumerateSurfaceFormatsInto(device, surface, surfaceFormats);
+        overeditor::utility::vk_utility::enumeratePresentModesInto(device, surface, presentModes);
+    }
+
+    const vk::SurfaceCapabilitiesKHR &SwapchainSupportDetails::getSurfaceCapabilities() const {
+        return surfaceCapabilities;
+    }
+
+    const std::vector<vk::SurfaceFormatKHR> &SwapchainSupportDetails::getSurfaceFormats() const {
+        return surfaceFormats;
+    }
+
+    const std::vector<vk::PresentModeKHR> &SwapchainSupportDetails::getPresentModes() const {
+        return presentModes;
+    }
+
 }

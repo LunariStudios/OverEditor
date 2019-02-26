@@ -18,9 +18,6 @@ namespace overeditor {
     }
 
 
-#define LOG_REQUIREMENTS(name, v) LOG_INFO << "Required " << name << " are (" << v.size() << "):";\
-    LOG_VECTOR_NO_HEADER(v, 1);
-
     Application::Application()
             : instance(), device(), surface(), swapchain(), graphicsQueue(), presentationQueue(), running(),
               sceneTick(), window(), instanceSuitable() {
@@ -91,9 +88,6 @@ namespace overeditor {
         }
         std::vector<vk::PhysicalDevice> devices(totalDevices);
         vkEnumeratePhysicalDevices(instance, &totalDevices, reinterpret_cast<VkPhysicalDevice *>(devices.data()));
-        /*swapchain = device.createSwapchainKHR(
-                vk::SwapchainCreateInfoKHR((vk::SwapchainCreateFlagsKHR) 0, surface,)
-        );*/
         // Create Window and Surface
         glfwWindowHint(GLFW_CLIENT_API, GLFW_NO_API);
         window = glfwCreateWindow(600, 800, OVEREDITOR_NAME, nullptr, nullptr);
@@ -194,6 +188,20 @@ namespace overeditor {
 
         graphicsQueue = device.getQueue(graphicsIndex, 0);
         presentationQueue = device.getQueue(presentationIndex, 0);
+        const overeditor::graphics::SwapchainSupportDetails &scSupport = elected.getSwapchainSupportDetails();
+        LOG_VECTOR_WITH("Surface formats", scSupport.getSurfaceFormats(), 1,
+                        "Format: " << (uint32_t) value.format << ", color space: " << (uint32_t) value.colorSpace);
+        LOG_VECTOR_WITH("Presentation modes", scSupport.getPresentModes(), 1, (uint32_t) value);
+        vk::SurfaceFormatKHR surfaceFormat{};
+        vk::PresentModeKHR presentMode{};
+        scSupport.configureSwapchain(&surfaceFormat, &presentMode);
+        LOG_INFO << "Using surface format: " << (uint32_t) surfaceFormat.format
+                 << ", colorSpace: " << (uint32_t) surfaceFormat.colorSpace << ", present mode: "
+                 << (uint32_t) presentMode;
+
+        swapchain = device.createSwapchainKHR(
+                scSupport.createSwapchainInfo()
+        );
         static utility::Event<float>::EventListener quitter = [&](float dt) {
             running = !glfwWindowShouldClose(window);
             if (glfwGetKey(window, GLFW_KEY_ESCAPE)) {

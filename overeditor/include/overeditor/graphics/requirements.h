@@ -9,6 +9,9 @@
 #include <vulkan/vulkan.hpp>
 #include <plog/Log.h>
 
+#define LOG_REQUIREMENTS(name, v) LOG_INFO << "Required " << name << " are (" << v.size() << "):";\
+    LOG_VECTOR_NO_HEADER(v, 1);
+
 namespace overeditor::graphics {
     class Requirements {
     private:

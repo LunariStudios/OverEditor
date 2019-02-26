@@ -3,7 +3,8 @@
 
 #include <vector>
 #include <vulkan/vulkan.h>
-
+#define PREFERRED_WIDTH 1920
+#define PREFERRED_HEIGHT 1080
 static std::vector<const char *> kRequiredInstanceExtensions = {
         // VK_KHR_SURFACE_EXTENSION_NAME  - Not included because is already included throught GLFW
 };
