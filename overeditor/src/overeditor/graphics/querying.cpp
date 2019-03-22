@@ -36,9 +36,9 @@ namespace overeditor::graphics {
         }
 
         uint32_t count;
-        vkEnumerateDeviceExtensionProperties(device, nullptr, &count, nullptr);
+        vkEnumerateDeviceExtensionProperties((VkPhysicalDevice) device, nullptr, &count, nullptr);
         std::vector<vk::ExtensionProperties> extensions(count);
-        vkEnumerateDeviceExtensionProperties(device, nullptr, &count,
+        vkEnumerateDeviceExtensionProperties((VkPhysicalDevice) device, nullptr, &count,
                                              reinterpret_cast<VkExtensionProperties *>(extensions.data()));
 
 
@@ -52,9 +52,10 @@ namespace overeditor::graphics {
 
         }
         uint32_t layerCount;
-        vkEnumerateDeviceLayerProperties(device, &layerCount, nullptr);
+        vkEnumerateDeviceLayerProperties((VkPhysicalDevice) device, &layerCount, nullptr);
         std::vector<vk::LayerProperties> layers(layerCount);
-        vkEnumerateDeviceLayerProperties(device, &layerCount, reinterpret_cast<VkLayerProperties *>(layers.data()));
+        vkEnumerateDeviceLayerProperties((VkPhysicalDevice) device, &layerCount,
+                                         reinterpret_cast<VkLayerProperties *>(layers.data()));
         for (const char *requiredLayer : requirementss.getRequiredLayers()) {
             if (std::none_of(layers.begin(), layers.end(), [&](const vk::LayerProperties &property) {
                 return strcmp(property.layerName, requiredLayer) == 0;
@@ -111,10 +112,11 @@ namespace overeditor::graphics {
     SwapchainSupportDetails::SwapchainSupportDetails(const vk::PhysicalDevice &device, const vk::SurfaceKHR &surface)
             : surfaceCapabilities(), surfaceFormats(), presentModes() {
         vkGetPhysicalDeviceSurfaceCapabilitiesKHR(
-                device, surface, reinterpret_cast<VkSurfaceCapabilitiesKHR *>(&surfaceCapabilities)
+                (VkPhysicalDevice) device, (VkSurfaceKHR) surface,
+                reinterpret_cast<VkSurfaceCapabilitiesKHR *>(&surfaceCapabilities)
         );
-        overeditor::utility::vk_utility::enumerateSurfaceFormatsInto(device, surface, surfaceFormats);
-        overeditor::utility::vk_utility::enumeratePresentModesInto(device, surface, presentModes);
+        surfaceFormats = device.getSurfaceFormatsKHR(surface);
+        presentModes = device.getSurfacePresentModesKHR(surface);
     }
 
     const vk::SurfaceCapabilitiesKHR &SwapchainSupportDetails::getSurfaceCapabilities() const {

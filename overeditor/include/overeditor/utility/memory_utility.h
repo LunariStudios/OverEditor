@@ -17,7 +17,7 @@ void printMemory(const T &value) {
              << typeid(T).name() << ")";
     ss << std::hex;
     do {
-        ss << *(bytePtr++);
+        ss << (int) *(bytePtr++);
     } while (bytePtr != bytePtrEnd);
     auto str = ss.str();
     LOG_INFO << "Memory is \"" << str << "\"";

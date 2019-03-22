@@ -11,7 +11,7 @@
 #include <plog/Appenders/ColorConsoleAppender.h>
 
 #include <algorithm>
-
+#include <nameof.hpp>
 namespace overeditor {
     void onError(int code, const char *msg) {
         LOG_ERROR << "GLFW Error (" << code << "): " << msg;
@@ -21,7 +21,7 @@ namespace overeditor {
     Application::Application()
             : instance(), device(), surface(), swapchain(), graphicsQueue(), presentationQueue(), running(),
               sceneTick(), window(), instanceSuitable() {
-        static plog::ColorConsoleAppender<plog::TxtFormatterUtcTime> consoleAppender;
+        static plog::ColorConsoleAppender<plog::TxtFormatter> consoleAppender;
         plog::init(plog::debug, &consoleAppender);
         glfwInit();
         glfwSetErrorCallback(onError);
@@ -82,16 +82,17 @@ namespace overeditor {
         uint32_t totalDevices;
 
         // Check how many devices there are
-        vkEnumeratePhysicalDevices(instance, &totalDevices, nullptr);
+        vkEnumeratePhysicalDevices((VkInstance) instance, &totalDevices, nullptr);
         if (totalDevices <= 0) {
             throw std::runtime_error("There are no Vulkan capable devices available!");
         }
         std::vector<vk::PhysicalDevice> devices(totalDevices);
-        vkEnumeratePhysicalDevices(instance, &totalDevices, reinterpret_cast<VkPhysicalDevice *>(devices.data()));
+        vkEnumeratePhysicalDevices((VkInstance) instance, &totalDevices,
+                                   reinterpret_cast<VkPhysicalDevice *>(devices.data()));
         // Create Window and Surface
         glfwWindowHint(GLFW_CLIENT_API, GLFW_NO_API);
         window = glfwCreateWindow(600, 800, OVEREDITOR_NAME, nullptr, nullptr);
-        glfwCreateWindowSurface(instance, window, nullptr, reinterpret_cast<VkSurfaceKHR *>(&surface));
+        glfwCreateWindowSurface((VkInstance) instance, window, nullptr, reinterpret_cast<VkSurfaceKHR *>(&surface));
         // Convert devices to candidates
         std::vector<graphics::PhysicalDeviceCandidate> candidates;
         candidates.reserve(devices.size());
@@ -178,7 +179,9 @@ namespace overeditor {
         try {
             auto f = vk::DeviceCreateInfo(
                     (vk::DeviceCreateFlags) 0,
-                    createQueueInfos.size(), createQueueInfos.data()
+                    createQueueInfos.size(), createQueueInfos.data(),
+                    deviceLayers.size(), deviceLayers.data(),
+                    deviceExtensions.size(), deviceExtensions.data()
             );
             device = elected.getDevice().createDevice(f);
         } catch (std::exception &e) {
@@ -190,18 +193,14 @@ namespace overeditor {
         presentationQueue = device.getQueue(presentationIndex, 0);
         const overeditor::graphics::SwapchainSupportDetails &scSupport = elected.getSwapchainSupportDetails();
         LOG_VECTOR_WITH("Surface formats", scSupport.getSurfaceFormats(), 1,
-                        "Format: " << (uint32_t) value.format << ", color space: " << (uint32_t) value.colorSpace);
-        LOG_VECTOR_WITH("Presentation modes", scSupport.getPresentModes(), 1, (uint32_t) value);
-        vk::SurfaceFormatKHR surfaceFormat{};
-        vk::PresentModeKHR presentMode{};
-        scSupport.configureSwapchain(&surfaceFormat, &presentMode);
-        LOG_INFO << "Using surface format: " << (uint32_t) surfaceFormat.format
-                 << ", colorSpace: " << (uint32_t) surfaceFormat.colorSpace << ", present mode: "
-                 << (uint32_t) presentMode;
+                        "Format: " << vk::to_string(value.format) << ", color space: " << vk::to_string(value.colorSpace));
+        LOG_VECTOR_WITH("Presentation modes", scSupport.getPresentModes(), 1, vk::to_string(value));
 
-        swapchain = device.createSwapchainKHR(
-                scSupport.createSwapchainInfo()
-        );
+
+        vk::SwapchainCreateInfoKHR info = scSupport.createSwapchainInfo(qIndices, surface);
+        swapchain = device.createSwapchainKHR(info);
+        // Free memory used on createSwapchainInfo
+        delete info.pQueueFamilyIndices;
         static utility::Event<float>::EventListener quitter = [&](float dt) {
             running = !glfwWindowShouldClose(window);
             if (glfwGetKey(window, GLFW_KEY_ESCAPE)) {
@@ -213,10 +212,11 @@ namespace overeditor {
     }
 
     Application::~Application() {
-        instance.destroy();
-        //device.destroy();
         sceneTick.clear();
-
+        vkDestroySwapchainKHR(device, swapchain, nullptr);
+        vkDestroySurfaceKHR((VkInstance) instance, (VkSurfaceKHR) surface, nullptr);
+        device.destroy();
+        instance.destroy();
     }
 
     void Application::run() {

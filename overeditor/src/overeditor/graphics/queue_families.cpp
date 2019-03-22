@@ -42,8 +42,12 @@ namespace overeditor::graphics {
     }
 
 
-    void FlagBitQueueFamily::offer(uint32_t index, const vk::QueueFamilyProperties &properties,
-                                   const vk::PhysicalDevice &device, const vk::SurfaceKHR &surface) {
+    void FlagBitQueueFamily::offer(
+            uint32_t index,
+            const vk::QueueFamilyProperties &properties,
+            const vk::PhysicalDevice &device,
+            const vk::SurfaceKHR &surface
+    ) {
         if (!FlagBitQueueFamily::index && (properties.queueFlags & bit) == bit) {
             FlagBitQueueFamily::index = index;
         }
@@ -61,10 +65,15 @@ namespace overeditor::graphics {
             const vk::PhysicalDevice &device,
             const vk::SurfaceKHR &surface
     ) {
+
         VkBool32 supported;
-        vkGetPhysicalDeviceSurfaceSupportKHR(device, index, surface, &supported);
+        vkGetPhysicalDeviceSurfaceSupportKHR((VkPhysicalDevice) device, index, (VkSurfaceKHR) surface, &supported);
         if (supported) {
             QueueFamily::index = index;
         }
+    }
+
+    PresentationQueueFamily::PresentationQueueFamily() : lastScore(0) {
+
     }
 }

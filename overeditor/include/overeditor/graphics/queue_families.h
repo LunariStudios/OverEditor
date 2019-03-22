@@ -38,7 +38,11 @@ namespace overeditor::graphics {
     };
 
     class PresentationQueueFamily : public QueueFamily {
+    private:
+        uint32_t lastScore;
     public:
+        PresentationQueueFamily();
+
         void offer(
                 uint32_t index,
                 const vk::QueueFamilyProperties &properties,
@@ -54,8 +58,12 @@ namespace overeditor::graphics {
     public:
         QueueFamilyIndices();
 
-        void offer(uint32_t index, const vk::QueueFamilyProperties &properties, const vk::PhysicalDevice &device,
-                   const vk::SurfaceKHR &surface);
+        void offer(
+                uint32_t index,
+                const vk::QueueFamilyProperties &properties,
+                const vk::PhysicalDevice &device,
+                const vk::SurfaceKHR &surface
+        );
 
         const QueueFamily &getGraphics() const;
 

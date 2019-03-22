@@ -11,7 +11,7 @@ add_executable(overeditor
 find_package(Vulkan REQUIRED)
 set(CMAKE_CXX_FLAGS_DEBUG "${CMAKE_CXX_FLAGS_DEBUG} -DDEBUG")
 get_target_property(VK_IDIR Vulkan::Vulkan INTERFACE_INCLUDE_DIRECTORIES)
-target_link_libraries(overeditor casc_static Vulkan::Vulkan plog glfw)
+target_link_libraries(overeditor casc_static Vulkan::Vulkan plog glfw nameof)
 target_include_directories(
         overeditor
         PUBLIC
