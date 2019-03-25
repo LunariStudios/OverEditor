@@ -3,6 +3,7 @@
 
 #include <vulkan/vulkan.hpp>
 #include <overeditor/graphics/querying.h>
+#include <overeditor/graphics/image_context.h>
 
 namespace overeditor::graphics {
     /**
@@ -11,7 +12,7 @@ namespace overeditor::graphics {
     class SwapChainContext {
     private:
         vk::SwapchainKHR swapchain;
-        std::vector<vk::Image> swapchainImages;
+        std::vector<ImageContext> swapchainImages;
         vk::Format swapchainFormat;
         vk::Extent2D swapchainExtent;
         const vk::Device *devicePtr;
@@ -28,7 +29,7 @@ namespace overeditor::graphics {
 
         const vk::SwapchainKHR &getSwapchain() const;
 
-        const std::vector<vk::Image> &getSwapchainImages() const;
+        const std::vector<ImageContext> &getSwapchainImages() const;
 
         vk::Format getSwapchainFormat() const;
 

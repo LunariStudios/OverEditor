@@ -6,7 +6,7 @@ namespace overeditor::graphics {
             const overeditor::graphics::QueueFamilyIndices &qIndices,
             const overeditor::graphics::SwapchainSupportDetails &scSupport,
             const vk::SurfaceKHR &surface
-    ) : devicePtr(&device) {
+    ) : devicePtr(&device), swapchainImages() {
         vk::SurfaceFormatKHR surfaceFormat = scSupport.selectSurfaceFormat();
         vk::PresentModeKHR presentMode = scSupport.selectPresentMode();
         vk::Extent2D extent = scSupport.selectSwapExtent();
@@ -30,9 +30,7 @@ namespace overeditor::graphics {
             throw std::runtime_error("Unable to get presentation queue index.");
         }
 
-        // TODO: Find way to do this without allocating from the heap
-        // This exists because once we exit the scope, graphicsIndex and presentIndex gets destroyed
-        auto *queueFamilyIndices = new uint32_t[2]{graphicsIndex, presentIndex};
+        uint32_t queueFamilyIndices[2] = {graphicsIndex, presentIndex};
         if (graphicsIndex != presentIndex) {
             info.imageSharingMode = vk::SharingMode::eConcurrent;
             info.queueFamilyIndexCount = 2;
@@ -46,24 +44,51 @@ namespace overeditor::graphics {
         info.compositeAlpha = vk::CompositeAlphaFlagBitsKHR::eOpaque;
         info.presentMode = presentMode;
         info.clipped = VK_TRUE;
-        LOG_VECTOR_WITH("Surface formats", scSupport.getSurfaceFormats(), 1,
-                        "Format: " << vk::to_string(value.format) << ", color space: "
-                                   << vk::to_string(value.colorSpace));
-        LOG_VECTOR_WITH("Presentation modes", scSupport.getPresentModes(), 1, vk::to_string(value));
 
         swapchainFormat = info.imageFormat;
         swapchainExtent = info.imageExtent;
         swapchain = device.createSwapchainKHR(info);
-        // Free memory used on createSwapchainInfo
-        delete info.pQueueFamilyIndices;
         uint32_t imgCount;
+        std::vector<vk::Image> images;
         vkGetSwapchainImagesKHR(device, swapchain, &imgCount, nullptr);
-        swapchainImages.resize(imgCount);
-        vkGetSwapchainImagesKHR(device, swapchain, &imgCount, reinterpret_cast<VkImage *>(swapchainImages.data()));
-
+        images.resize(imgCount);
+        vkGetSwapchainImagesKHR(device, swapchain, &imgCount, reinterpret_cast<VkImage *>(images.data()));
+        for (vk::Image &img : images) {
+            vk::ImageViewCreateInfo info(
+                    (vk::ImageViewCreateFlags) 0, // Flags
+                    img, // Image
+                    vk::ImageViewType::e2D, // Image Type
+                    swapchainFormat, //Image format
+                    vk::ComponentMapping(), // Content Mapping
+                    vk::ImageSubresourceRange(
+                            vk::ImageAspectFlagBits::eColor, // Color bit
+                            0, // Base Mip Level
+                            1, // Level Count
+                            0, // Base Array Layer
+                            1 // Layer count
+                    )
+            );
+            vk::ImageView view;
+            auto createImgViewResult = vkCreateImageView(
+                    device,
+                    reinterpret_cast<VkImageViewCreateInfo *>(&info),
+                    nullptr,
+                    reinterpret_cast<VkImageView *>(&view)
+            );
+            if (createImgViewResult != VK_SUCCESS) {
+                throw std::runtime_error(
+                        std::string("Unable to create image view: ") + vk::to_string((vk::Result) createImgViewResult));
+            }
+            swapchainImages.emplace_back(img, view);
+        }
     }
 
     SwapChainContext::~SwapChainContext() {
+        const vk::Device &device = *devicePtr;
+        for (ImageContext &img : swapchainImages) {
+            vkDestroyImageView(device, img.getView(), nullptr);
+        }
+        swapchainImages.clear();
         vkDestroySwapchainKHR(*devicePtr, swapchain, nullptr);
     }
 
@@ -71,7 +96,7 @@ namespace overeditor::graphics {
         return swapchain;
     }
 
-    const std::vector<vk::Image> &SwapChainContext::getSwapchainImages() const {
+    const std::vector<ImageContext> &SwapChainContext::getSwapchainImages() const {
         return swapchainImages;
     }
 
