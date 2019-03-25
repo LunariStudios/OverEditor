@@ -11,15 +11,14 @@
 #include <plog/Appenders/ColorConsoleAppender.h>
 
 #include <algorithm>
-#include <nameof.hpp>
+
 namespace overeditor {
     void onError(int code, const char *msg) {
         LOG_ERROR << "GLFW Error (" << code << "): " << msg;
     }
 
-
     Application::Application()
-            : instance(), device(), surface(), swapchain(), graphicsQueue(), presentationQueue(), running(),
+            : instance(), deviceContext(nullptr), running(true),
               sceneTick(), window(), instanceSuitable() {
         static plog::ColorConsoleAppender<plog::TxtFormatter> consoleAppender;
         plog::init(plog::debug, &consoleAppender);
@@ -30,7 +29,6 @@ namespace overeditor {
         const auto &instanceRequirements = requirements.getInstanceRequirements();
         const std::vector<const char *> &instanceRequiredExtensions = instanceRequirements.getRequiredExtensions();
         const auto &instanceRequiredLayers = instanceRequirements.getRequiredLayers();
-
         // Get available instance extensions and layers
         uint32_t instanceLayerCount, instanceExtensionCount;
         // Find instance extensions
@@ -61,8 +59,6 @@ namespace overeditor {
             instanceSuitable.printErrors();
         }
         const auto &deviceRequirements = requirements.getDeviceRequirements();
-        const auto &deviceExtensions = deviceRequirements.getRequiredExtensions();
-        const auto &deviceLayers = deviceRequirements.getRequiredLayers();
 
         auto appInfo = vk::ApplicationInfo(
                 OVEREDITOR_NAME, // Application name
@@ -156,51 +152,7 @@ namespace overeditor {
 
         graphics::PhysicalDeviceCandidate elected = candidates[0];
         LOG_INFO << "Elected device is \"" << elected.getName() << "\"";
-        const graphics::QueueFamilyIndices &qIndices = elected.getIndices();
-
-        std::vector<vk::DeviceQueueCreateInfo> createQueueInfos;
-        uint32_t graphicsIndex, presentationIndex;
-        if (!qIndices.getGraphics().tryGet(&graphicsIndex)) {
-            throw std::runtime_error("Couldn't find graphics queue");
-        }
-        if (!qIndices.getPresentation().tryGet(&presentationIndex)) {
-            throw std::runtime_error("Couldn't find presentation index");
-        }
-        const float queuePriority = 1.0f;
-        createQueueInfos.emplace_back((vk::DeviceQueueCreateFlags) 0, graphicsIndex, 1, &queuePriority);
-        createQueueInfos.emplace_back((vk::DeviceQueueCreateFlags) 0, presentationIndex, 1, &queuePriority);
-        LOG_INFO << "Creating " << createQueueInfos.size() << " queues: ";
-        for (int i = 0; i < createQueueInfos.size(); ++i) {
-            LOG_INFO << INDENTATION(1) << "Queue #" << i << ":";
-            auto &q = createQueueInfos[i];
-            LOG_INFO << INDENTATION(2) << "Count: " << q.queueCount;
-            LOG_INFO << INDENTATION(2) << "Queue Family Index: " << q.queueFamilyIndex;
-        }
-        try {
-            auto f = vk::DeviceCreateInfo(
-                    (vk::DeviceCreateFlags) 0,
-                    createQueueInfos.size(), createQueueInfos.data(),
-                    deviceLayers.size(), deviceLayers.data(),
-                    deviceExtensions.size(), deviceExtensions.data()
-            );
-            device = elected.getDevice().createDevice(f);
-        } catch (std::exception &e) {
-            LOG_FATAL << "Error while creating logical device: " << e.what();
-            throw e;
-        }
-
-        graphicsQueue = device.getQueue(graphicsIndex, 0);
-        presentationQueue = device.getQueue(presentationIndex, 0);
-        const overeditor::graphics::SwapchainSupportDetails &scSupport = elected.getSwapchainSupportDetails();
-        LOG_VECTOR_WITH("Surface formats", scSupport.getSurfaceFormats(), 1,
-                        "Format: " << vk::to_string(value.format) << ", color space: " << vk::to_string(value.colorSpace));
-        LOG_VECTOR_WITH("Presentation modes", scSupport.getPresentModes(), 1, vk::to_string(value));
-
-
-        vk::SwapchainCreateInfoKHR info = scSupport.createSwapchainInfo(qIndices, surface);
-        swapchain = device.createSwapchainKHR(info);
-        // Free memory used on createSwapchainInfo
-        delete info.pQueueFamilyIndices;
+        deviceContext = new graphics::DeviceContext(elected, deviceRequirements, surface);
         static utility::Event<float>::EventListener quitter = [&](float dt) {
             running = !glfwWindowShouldClose(window);
             if (glfwGetKey(window, GLFW_KEY_ESCAPE)) {
@@ -213,9 +165,8 @@ namespace overeditor {
 
     Application::~Application() {
         sceneTick.clear();
-        vkDestroySwapchainKHR(device, swapchain, nullptr);
+        delete deviceContext;
         vkDestroySurfaceKHR((VkInstance) instance, (VkSurfaceKHR) surface, nullptr);
-        device.destroy();
         instance.destroy();
     }
 

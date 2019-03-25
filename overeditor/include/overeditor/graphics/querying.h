@@ -33,55 +33,6 @@ namespace overeditor::graphics {
 
         const std::vector<vk::PresentModeKHR> &getPresentModes() const;
 
-        // this is inline as a hack because queueFamiliesIndices is on the stack and gets fucked up once we leave
-        // the scope of the function
-        inline const vk::SwapchainCreateInfoKHR createSwapchainInfo(
-                const QueueFamilyIndices &indices,
-                const vk::SurfaceKHR &surface
-        ) const {
-            vk::SurfaceFormatKHR surfaceFormat = selectSurfaceFormat();
-            vk::PresentModeKHR presentMode = selectPresentMode();
-            vk::Extent2D extent = chooseSwapExtent();
-            uint32_t imageCount = surfaceCapabilities.minImageCount + 1;
-            auto info = vk::SwapchainCreateInfoKHR(
-                    (vk::SwapchainCreateFlagsKHR) 0, // Flags
-                    surface, // Surface
-                    imageCount, // minImageCount
-                    surfaceFormat.format, // imageFormat
-                    surfaceFormat.colorSpace, // imageColorSpace
-                    extent, // imageExtent
-                    1, // imageArrayLayers
-                    vk::ImageUsageFlagBits::eColorAttachment // imageUsage
-            );
-            uint32_t graphicsIndex, presentIndex;
-            if (!indices.getGraphics().tryGet(&graphicsIndex)) {
-                throw std::runtime_error("Unable to get graphics queue index.");
-            }
-            if (!indices.getPresentation().tryGet(&presentIndex)) {
-                throw std::runtime_error("Unable to get presentation queue index.");
-            }
-
-            // TODO: Find way to do this without allocating from the heap
-            // This exists because once we exit the scope, graphicsIndex and presentIndex gets destroyed
-            auto *queueFamilyIndices = new uint32_t[2]{graphicsIndex, presentIndex};
-            if (graphicsIndex != presentIndex) {
-                info.imageSharingMode = vk::SharingMode::eConcurrent;
-                info.queueFamilyIndexCount = 2;
-                info.pQueueFamilyIndices = queueFamilyIndices;
-            } else {
-                info.imageSharingMode = vk::SharingMode::eExclusive;
-                info.queueFamilyIndexCount = 0; // Optional
-                info.pQueueFamilyIndices = nullptr; // Optional
-            }
-            info.preTransform = surfaceCapabilities.currentTransform;
-            info.compositeAlpha = vk::CompositeAlphaFlagBitsKHR::eOpaque;
-            info.presentMode = presentMode;
-            info.clipped = VK_TRUE;
-            return info;
-        }
-
-
-    private:
         vk::PresentModeKHR selectPresentMode() const {
             if (presentModes.empty()) {
                 throw std::runtime_error("There are no surface formats available");
@@ -109,21 +60,21 @@ namespace overeditor::graphics {
             }
         }
 
-        VkExtent2D chooseSwapExtent() const {
+        vk::Extent2D selectSwapExtent() const {
             if (surfaceCapabilities.currentExtent.width != std::numeric_limits<uint32_t>::max()) {
                 return surfaceCapabilities.currentExtent;
             } else {
-                VkExtent2D actualExtent = {PREFERRED_WIDTH, PREFERRED_HEIGHT};
-
-                actualExtent.width = std::max(
+                auto w = std::clamp(
+                        (uint32_t) PREFERRED_WIDTH,
                         surfaceCapabilities.minImageExtent.width,
-                        std::min(surfaceCapabilities.maxImageExtent.width, actualExtent.width)
+                        surfaceCapabilities.maxImageExtent.width
                 );
-                actualExtent.height = std::max(
+                auto h = std::clamp(
+                        (uint32_t) PREFERRED_HEIGHT,
                         surfaceCapabilities.minImageExtent.height,
-                        std::min(surfaceCapabilities.maxImageExtent.height, actualExtent.height));
-
-                return actualExtent;
+                        surfaceCapabilities.maxImageExtent.height
+                );
+                return vk::Extent2D(w, h);
             }
         }
     };
@@ -139,8 +90,11 @@ namespace overeditor::graphics {
         std::vector<vk::QueueFamilyProperties> queueFamilyProperties;
         SwapchainSupportDetails swapchainSupportDetails;
     public:
-        PhysicalDeviceCandidate(const overeditor::graphics::Requirements &requirements,
-                                const vk::PhysicalDevice &device, const vk::SurfaceKHR &surface);
+        PhysicalDeviceCandidate(
+                const overeditor::graphics::Requirements &requirements,
+                const vk::PhysicalDevice &device,
+                const vk::SurfaceKHR &surface
+        );
 
         const vk::PhysicalDevice &getDevice() const;
 

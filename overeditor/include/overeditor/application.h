@@ -3,10 +3,11 @@
 
 #include <overeditor/utility/step_function.h>
 #include <overeditor/utility/success_status.h>
+#include <overeditor/graphics/swapchain_context.h>
+#include <overeditor/graphics/device_context.h>
 #include <vulkan/vulkan.h>
 #include <vulkan/vulkan.hpp>
 #include <GLFW/glfw3.h>
-
 /**
  * The current version of OverEditor.
  * The OVEREDITOR_VERSION_MAJOR, OVEREDITOR_VERSION_MINOR and OVEREDITOR_VERSION_PATCH macros are defined by CMake
@@ -20,15 +21,16 @@ namespace overeditor {
 
     class Application {
     private:
+        // Vulkan members
         vk::Instance instance;
-        vk::Device device;
-        vk::Queue graphicsQueue, presentationQueue;
+        vk::SurfaceKHR surface;
+        // Graphics layer members
+        graphics::DeviceContext * deviceContext;
+        // Engine layer members
         bool running;
         utility::StepFunction<float> sceneTick;
         utility::SuccessStatus instanceSuitable;
-        GLFWwindow * window;
-        vk::SwapchainKHR swapchain;
-        vk::SurfaceKHR surface;
+        GLFWwindow *window;
     public:
         Application();
 

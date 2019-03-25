@@ -7,11 +7,11 @@ add_executable(overeditor
         include/overeditor/ui/panel.h
         include/overeditor/utility/string_utility.h
         include/overeditor/utility/memory_utility.h
-        include/overeditor/graphics/queue_families.h src/overeditor/graphics/queue_families.cpp include/overeditor/graphics/querying.h src/overeditor/graphics/querying.cpp include/overeditor/overeditor_constants.h include/overeditor/graphics/requirements.h src/overeditor/graphics/requirements.cpp include/overeditor/utility/collection_utility.h include/overeditor/utility/success_status.h include/overeditor/utility/vulkan_utility.h src/overeditor/utility/vulkan_utility.cpp)
+        include/overeditor/graphics/queue_families.h src/overeditor/graphics/queue_families.cpp include/overeditor/graphics/querying.h src/overeditor/graphics/querying.cpp include/overeditor/overeditor_constants.h include/overeditor/graphics/requirements.h src/overeditor/graphics/requirements.cpp include/overeditor/utility/collection_utility.h include/overeditor/utility/success_status.h include/overeditor/utility/vulkan_utility.h src/overeditor/utility/vulkan_utility.cpp include/overeditor/graphics/swapchain_context.h src/overeditor/graphics/swapchain_context.cpp include/overeditor/graphics/device_context.h include/overeditor/graphics/queue_context.h src/overeditor/graphics/device_context.cpp src/overeditor/graphics/queue_context.cpp)
 find_package(Vulkan REQUIRED)
 set(CMAKE_CXX_FLAGS_DEBUG "${CMAKE_CXX_FLAGS_DEBUG} -DDEBUG")
 get_target_property(VK_IDIR Vulkan::Vulkan INTERFACE_INCLUDE_DIRECTORIES)
-target_link_libraries(overeditor casc_static Vulkan::Vulkan plog glfw nameof)
+target_link_libraries(overeditor casc_static Vulkan::Vulkan plog glfw)
 target_include_directories(
         overeditor
         PUBLIC
