@@ -21,7 +21,7 @@ set(
 
         include/overeditor/graphics/requirements.h
         src/overeditor/graphics/requirements.cpp
-)
+        include/overeditor/graphics/shaders/shader.h)
 set(
         OVEREDITOR_COMMON
         include/overeditor/utility/collection_utility.h
@@ -62,7 +62,7 @@ endforeach ()
 add_custom_command(
         TARGET overeditor
         PRE_BUILD
-        COMMAND mkdir res
+        COMMAND if not exist res mkdir res
 )
 add_custom_command(
         TARGET overeditor
