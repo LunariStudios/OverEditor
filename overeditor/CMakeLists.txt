@@ -48,10 +48,32 @@ set(
         ${OVEREDITOR_MAIN}
 )
 add_executable(overeditor ${OVEREDITOR_ALL})
+
+set(
+        OVEREDITOR_SHADERS
+        res/shaders/standart.vert
+        res/shaders/standart.frag
+)
+
+foreach (SHADER ${OVEREDITOR_SHADERS})
+    list(APPEND SHADER_PATHS ${CMAKE_CURRENT_SOURCE_DIR}/${SHADER})
+endforeach ()
+
+add_custom_command(
+        TARGET overeditor
+        PRE_BUILD
+        COMMAND mkdir res
+)
+add_custom_command(
+        TARGET overeditor
+        POST_BUILD
+        COMMAND $ENV{VULKAN_SDK}/Bin/glslangValidator -V ${SHADER_PATHS}
+        WORKING_DIRECTORY ${CMAKE_CURRENT_BINARY_DIR}/res
+)
 find_package(Vulkan REQUIRED)
-set(CMAKE_CXX_FLAGS_DEBUG "${CMAKE_CXX_FLAGS_DEBUG} -DDEBUG")
-get_target_property(VK_IDIR Vulkan::Vulkan INTERFACE_INCLUDE_DIRECTORIES)
+
 target_link_libraries(overeditor casc_static Vulkan::Vulkan plog glfw)
+
 target_include_directories(
         overeditor
         PUBLIC
