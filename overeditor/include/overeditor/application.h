@@ -5,6 +5,7 @@
 #include <overeditor/utility/success_status.h>
 #include <overeditor/graphics/swapchain_context.h>
 #include <overeditor/graphics/device_context.h>
+#include <overeditor/graphics/shaders/graphics_pipeline.h>
 #include <vulkan/vulkan.h>
 #include <vulkan/vulkan.hpp>
 #include <GLFW/glfw3.h>
@@ -26,6 +27,7 @@ namespace overeditor {
         vk::SurfaceKHR surface;
         // Graphics layer members
         graphics::DeviceContext * deviceContext;
+        graphics::shaders::GraphicsPipeline * graphicsContext;
         // Engine layer members
         bool running;
         utility::StepFunction<float> sceneTick;

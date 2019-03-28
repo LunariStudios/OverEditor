@@ -21,7 +21,7 @@ set(
 
         include/overeditor/graphics/requirements.h
         src/overeditor/graphics/requirements.cpp
-        include/overeditor/graphics/shaders/shader.h)
+        include/overeditor/graphics/shaders/shader.h include/overeditor/graphics/shaders/graphics_pipeline.h src/overeditor/graphics/shaders/graphics_pipeline.cpp src/overeditor/graphics/shaders/shader.cpp)
 set(
         OVEREDITOR_COMMON
         include/overeditor/utility/collection_utility.h

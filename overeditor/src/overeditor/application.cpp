@@ -154,13 +154,10 @@ namespace overeditor {
         graphics::PhysicalDeviceCandidate elected = candidates[0];
         LOG_INFO << "Elected device is \"" << elected.getName() << "\"";
         deviceContext = new graphics::DeviceContext(elected, deviceRequirements, surface);
+        auto resDirectory = std::filesystem::current_path() / "res";
+        graphicsContext = new graphics::shaders::GraphicsPipeline(*deviceContext, resDirectory);
         // Load shaders
-        try {
-            auto shader = overeditor::graphics::shaders::Shader(std::filesystem::current_path() / "res/vert.spv");
-            auto module = shader.createShaderFor(deviceContext->getDevice());
-        } catch (const std::runtime_error& e) {
-            LOG_ERROR << "Error while creating shader: " << e.what();
-        }
+
         static utility::Event<float>::EventListener quitter = [&](float dt) {
             running = !glfwWindowShouldClose(window);
             if (glfwGetKey(window, GLFW_KEY_ESCAPE)) {
@@ -173,6 +170,7 @@ namespace overeditor {
 
     Application::~Application() {
         sceneTick.clear();
+        delete graphicsContext;
         delete deviceContext;
         vkDestroySurfaceKHR((VkInstance) instance, (VkSurfaceKHR) surface, nullptr);
         instance.destroy();
