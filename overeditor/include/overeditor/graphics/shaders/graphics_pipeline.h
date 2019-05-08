@@ -17,6 +17,9 @@ namespace overeditor::graphics::shaders {
         vk::RenderPass renderPass;
         vk::Pipeline pipeline;
         const vk::Device *devicePtr;
+        std::vector<vk::Framebuffer> framebuffers;
+        vk::CommandPool commandPool;
+        std::vector<vk::CommandBuffer> commandBuffers;
     public:
         GraphicsPipeline(
                 const DeviceContext &deviceContext,

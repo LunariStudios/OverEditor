@@ -18,6 +18,8 @@ namespace overeditor::graphics {
 
         bool tryGet(uint32_t *result) const;
 
+        uint32_t get() const;
+
         bool present() const;
 
         friend std::ostream &operator<<(std::ostream &os, const QueueFamily &family);

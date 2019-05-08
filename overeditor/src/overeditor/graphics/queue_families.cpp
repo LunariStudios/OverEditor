@@ -57,6 +57,14 @@ namespace overeditor::graphics {
         return (bool) index;
     }
 
+    uint32_t QueueFamily::get() const {
+        uint32_t result;
+        if (!tryGet(&result)) {
+            throw std::runtime_error("Unable to get index.");
+        }
+        return result;
+    }
+
     FlagBitQueueFamily::FlagBitQueueFamily(vk::QueueFlagBits bit) : bit(bit) {}
 
     void PresentationQueueFamily::offer(

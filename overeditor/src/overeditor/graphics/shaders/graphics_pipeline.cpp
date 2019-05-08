@@ -78,17 +78,12 @@ namespace overeditor::graphics::shaders {
                 2,
                 dynamicStates
         );
-        auto layoutInfo = vk::PipelineLayoutCreateInfo();
-        vkAssertOk(vkCreatePipelineLayout(
-                device,
-                reinterpret_cast<VkPipelineLayoutCreateInfo *>(&layoutInfo),
-                nullptr,
-                reinterpret_cast<VkPipelineLayout *>(&layout)
-        ));
+
+        layout = device.createPipelineLayout(vk::PipelineLayoutCreateInfo());
 
         vk::AttachmentDescription colorAttachment(
-                (vk::AttachmentDescriptionFlags) 0,
-                deviceContext.getSwapChainContext()->getSwapchainFormat(),
+                (vk::AttachmentDescriptionFlags) 0, // Flags
+                deviceContext.getSwapChainContext()->getSwapchainFormat(), // Format
                 vk::SampleCountFlagBits::e1,
                 vk::AttachmentLoadOp::eClear,
                 vk::AttachmentStoreOp::eStore,
@@ -107,21 +102,13 @@ namespace overeditor::graphics::shaders {
                 0, nullptr,
                 1, &colorAttachmentRef
         );
-        vk::RenderPassCreateInfo renderPassCreateInfo(
+        renderPass = device.createRenderPass(vk::RenderPassCreateInfo(
                 (vk::RenderPassCreateFlags) 0,
                 1,
                 &colorAttachment,
                 1,
                 &subpass
-        );
-        vkAssertOk(
-                vkCreateRenderPass(
-                        device,
-                        reinterpret_cast<VkRenderPassCreateInfo *>(&renderPassCreateInfo),
-                        nullptr,
-                        reinterpret_cast<VkRenderPass *>(&renderPass)
-                )
-        )
+        ));
         vk::GraphicsPipelineCreateInfo graphicsInfo(
                 (vk::PipelineCreateFlags) 0,
                 2,// Stage count
@@ -136,25 +123,58 @@ namespace overeditor::graphics::shaders {
                 &colorBlending,
                 &dynamicState, layout, renderPass, 0, nullptr, -1
         );
-        vkAssertOk(
-                vkCreateGraphicsPipelines(
-                        device,
-                        VK_NULL_HANDLE,
-                        1,
-                        reinterpret_cast<VkGraphicsPipelineCreateInfo *>(&graphicsInfo),
-                        nullptr,
-                        reinterpret_cast<VkPipeline *>(&pipeline)
+        pipeline = device.createGraphicsPipeline(nullptr, graphicsInfo);
+        auto swapchainContext = deviceContext.getSwapChainContext();
+        const auto &imgs = swapchainContext->getSwapchainImages();
+        const auto &swapChainExtent = swapchainContext->getSwapchainExtent();
+        size_t imageCount = imgs.size();
+        framebuffers.reserve(imageCount);
+        for (size_t i = 0; i < imageCount; ++i) {
+            vk::ImageView attachments[] = {
+                    imgs[i].getView()
+            };
+
+            framebuffers.emplace_back(
+                    device.createFramebuffer(
+                            vk::FramebufferCreateInfo(
+                                    (vk::FramebufferCreateFlags) 0,
+                                    renderPass, 1, attachments, swapChainExtent.width, swapChainExtent.height, 1
+                            )
+                    )
+            );
+        }
+
+        commandPool = device.createCommandPool(
+                vk::CommandPoolCreateInfo(
+                        (vk::CommandPoolCreateFlags) 0,
+                        deviceContext.getQueueContext()->getFamilyIndices().getGraphics().get()
                 )
-        )
+        );
+
+        commandBuffers = device.allocateCommandBuffers(
+                vk::CommandBufferAllocateInfo(commandPool, vk::CommandBufferLevel::ePrimary, framebuffers.size()));
+        for (size_t i = 0; i < commandBuffers.size(); i++) {
+            vk::CommandBufferBeginInfo beginInfo(
+                    (vk::CommandBufferUsageFlags) vk::CommandBufferUsageFlagBits::eSimultaneousUse
+            );
+            const vk::CommandBuffer &buf = commandBuffers[i];
+            buf.begin(beginInfo);
+            buf.beginRenderPass(vk::RenderPassBeginInfo(),);
+        }
     }
 
     GraphicsPipeline::~GraphicsPipeline() {
         const vk::Device &device = *devicePtr;
-        vkDestroyPipeline(device, pipeline, nullptr);
-        vkDestroyPipelineLayout(device, layout, nullptr);
-        vkDestroyRenderPass(device, renderPass, nullptr);
-        vkDestroyShaderModule(device, fragModule, nullptr);
-        vkDestroyShaderModule(device, vertModule, nullptr);
+        device.freeCommandBuffers(commandPool, commandBuffers.size(), commandBuffers.data());
+        device.destroy(commandPool);
+        for (auto framebuffer : framebuffers) {
+            device.destroy(framebuffer);
+        }
+        device.destroy(pipeline);
+        device.destroy(layout);
+        device.destroy(renderPass);
+        device.destroy(fragModule);
+        device.destroy(vertModule);
     }
 
     const Shader &GraphicsPipeline::getFragShader() const {

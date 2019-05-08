@@ -7,13 +7,13 @@
 #define COMBINE_HELPER(X, Y) X##Y
 #define COMBINE(X, Y) COMBINE_HELPER(X,Y)
 #define vkAssertVar COMBINE(vkresult, __LINE__)
-#define vkAssertOk_(x, error_msg)\
+#define _vkAssertOk(x, error_msg)\
     auto vkAssertVar = x;\
     if( vkAssertVar != VK_SUCCESS) { \
         throw std::runtime_error(error_msg);\
     }
-#define vkAssertOkOr(x, error_msg) vkAssertOk_(x, std::string(error_msg) + ": " + vk::to_string((vk::Result) vkAssertVar) + ")")
+#define vkAssertOkOr(x, error_msg) _vkAssertOk(x, std::string(error_msg) + ": " + vk::to_string((vk::Result) vkAssertVar) + ")")
 
-#define vkAssertOk(x) vkAssertOk_(x, std::string("Error while executing ") + #x +": " + vk::to_string((vk::Result) vkAssertVar) + ")")
+#define vkAssertOk(x) _vkAssertOk(x, std::string("Error while executing ") + #x +": " + vk::to_string((vk::Result) vkAssertVar) + ")")
 
 #endif
