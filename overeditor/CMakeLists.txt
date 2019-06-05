@@ -58,18 +58,35 @@ set(
 foreach (SHADER ${OVEREDITOR_SHADERS})
     list(APPEND SHADER_PATHS ${CMAKE_CURRENT_SOURCE_DIR}/${SHADER})
 endforeach ()
+if (WIN32)
+    add_custom_command(
+            TARGET overeditor
+            PRE_BUILD
+            COMMAND if not exist res mkdir res
+    )
+    add_custom_command(
+            TARGET overeditor
+            POST_BUILD
+            COMMAND $ENV{VULKAN_SDK}/Bin/glslangValidator -V ${SHADER_PATHS}
+            WORKING_DIRECTORY ${CMAKE_CURRENT_BINARY_DIR}/res
+    )
+endif ()
 
-add_custom_command(
-        TARGET overeditor
-        PRE_BUILD
-        COMMAND if not exist res mkdir res
-)
-add_custom_command(
-        TARGET overeditor
-        POST_BUILD
-        COMMAND $ENV{VULKAN_SDK}/Bin/glslangValidator -V ${SHADER_PATHS}
-        WORKING_DIRECTORY ${CMAKE_CURRENT_BINARY_DIR}/res
-)
+if (UNIX)
+    add_custom_command(
+            TARGET overeditor
+            PRE_BUILD
+            COMMAND mkdir -p res
+    )
+    message("sdk @ $ENV{VULKAN_SDK}")
+    add_custom_command(
+            TARGET overeditor
+            POST_BUILD
+            COMMAND $ENV{VULKAN_SDK}/bin/glslangValidator -V ${SHADER_PATHS}
+            WORKING_DIRECTORY ${CMAKE_CURRENT_BINARY_DIR}/res
+    )
+endif ()
+
 find_package(Vulkan REQUIRED)
 
 target_link_libraries(overeditor casc_static Vulkan::Vulkan plog glfw)

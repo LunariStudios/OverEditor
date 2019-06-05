@@ -154,7 +154,9 @@ namespace overeditor {
         graphics::PhysicalDeviceCandidate elected = candidates[0];
         LOG_INFO << "Elected device is \"" << elected.getName() << "\"";
         deviceContext = new graphics::DeviceContext(elected, deviceRequirements, surface);
-        auto resDirectory = std::filesystem::current_path() / "res";
+        LOG_INFO << "Logical device created";
+        std::filesystem::path resDirectory = std::filesystem::current_path() / "res";
+        LOG_INFO << "Using resources located at \"" << resDirectory.string() << "\"";
         graphicsContext = new graphics::shaders::GraphicsPipeline(*deviceContext, resDirectory);
         // Load shaders
 

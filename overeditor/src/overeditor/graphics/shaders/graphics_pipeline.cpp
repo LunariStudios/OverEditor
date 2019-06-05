@@ -159,7 +159,7 @@ namespace overeditor::graphics::shaders {
             );
             const vk::CommandBuffer &buf = commandBuffers[i];
             buf.begin(beginInfo);
-            buf.beginRenderPass(vk::RenderPassBeginInfo(),);
+            //buf.beginRenderPass(vk::RenderPassBeginInfo(),);
         }
     }
 

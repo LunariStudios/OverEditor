@@ -19,7 +19,9 @@ namespace overeditor::graphics {
         }
         const float queuePriority = 1.0f;
         createQueueInfos.emplace_back((vk::DeviceQueueCreateFlags) 0, graphicsIndex, 1, &queuePriority);
-        createQueueInfos.emplace_back((vk::DeviceQueueCreateFlags) 0, presentationIndex, 1, &queuePriority);
+        if (graphicsIndex != presentationIndex) {
+            createQueueInfos.emplace_back((vk::DeviceQueueCreateFlags) 0, presentationIndex, 1, &queuePriority);
+        }
         LOG_INFO << "Creating " << createQueueInfos.size() << " queues: ";
         for (int i = 0; i < createQueueInfos.size(); ++i) {
             LOG_INFO << INDENTATION(1) << "Queue #" << i << ":";
@@ -49,6 +51,7 @@ namespace overeditor::graphics {
                                    << vk::to_string(value.colorSpace));
         LOG_VECTOR_WITH("Presentation modes", scSupport.getPresentModes(), 1, vk::to_string(value));
         swapChainContext = new SwapChainContext(device, qIndices, scSupport, surface);
+        LOG_INFO << "ggwp";
     }
 
     DeviceContext::~DeviceContext() {

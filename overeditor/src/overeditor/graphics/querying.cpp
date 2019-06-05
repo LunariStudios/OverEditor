@@ -1,6 +1,7 @@
 #include <overeditor/graphics/querying.h>
 #include <plog/Log.h>
 
+#define DISCRETE_GPU_BONUS 1500
 namespace overeditor::graphics {
     PhysicalDeviceCandidate::PhysicalDeviceCandidate(
             const overeditor::graphics::Requirements &requirementss,
@@ -13,8 +14,8 @@ namespace overeditor::graphics {
         swapchainSupportDetails(device, surface) {
         auto name = deviceProperties.deviceName;
         auto type = deviceProperties.deviceType;
-        if (type == vk::PhysicalDeviceType::eCpu || type == vk::PhysicalDeviceType::eOther) {
-            suitableness.addError("Not dedicated GPU");
+        if (type == vk::PhysicalDeviceType::eDiscreteGpu) {
+            score += DISCRETE_GPU_BONUS;
         }
         size_t totalMemory = 0;
         for (int j = 0; j < memoryProperties.memoryHeapCount; ++j) {
