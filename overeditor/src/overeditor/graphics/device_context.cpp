@@ -51,7 +51,6 @@ namespace overeditor::graphics {
                                    << vk::to_string(value.colorSpace));
         LOG_VECTOR_WITH("Presentation modes", scSupport.getPresentModes(), 1, vk::to_string(value));
         swapChainContext = new SwapChainContext(device, qIndices, scSupport, surface);
-        LOG_INFO << "ggwp";
     }
 
     DeviceContext::~DeviceContext() {

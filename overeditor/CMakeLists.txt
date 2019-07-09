@@ -78,13 +78,13 @@ if (UNIX)
             PRE_BUILD
             COMMAND mkdir -p res
     )
-    message("sdk @ $ENV{VULKAN_SDK}")
     add_custom_command(
             TARGET overeditor
             POST_BUILD
             COMMAND $ENV{VULKAN_SDK}/bin/glslangValidator -V ${SHADER_PATHS}
             WORKING_DIRECTORY ${CMAKE_CURRENT_BINARY_DIR}/res
     )
+    target_link_libraries(overeditor stdc++fs)
 endif ()
 
 find_package(Vulkan REQUIRED)
