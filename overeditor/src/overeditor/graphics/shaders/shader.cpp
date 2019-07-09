@@ -2,8 +2,8 @@
 #include <overeditor/utility/vulkan_utility.h>
 
 namespace overeditor::graphics::shaders {
-    Shader::Shader(const std::filesystem::path &filepath) {
-        std::basic_ifstream<uint8_t> file(filepath, std::ios::ate | std::ios::binary);
+    Shader::Shader(const std::filesystem::path &filepath) : buf() {
+        std::ifstream file(filepath, std::ios::ate | std::ios::binary);
         if (!file.is_open()) {
             throw std::runtime_error(std::string("Unable to open file: ") + filepath.string());
         }
@@ -15,11 +15,13 @@ namespace overeditor::graphics::shaders {
     }
 
     vk::ShaderModule Shader::createShaderFor(const vk::Device &device) {
-        auto info = vk::ShaderModuleCreateInfo(
-                (vk::ShaderModuleCreateFlags) 0,
-                buf.size(),
-                reinterpret_cast<uint32_t *>(buf.data())
-        );
+        VkShaderModuleCreateInfo info;
+        info.sType = VK_STRUCTURE_TYPE_SHADER_MODULE_CREATE_INFO;
+        info.pNext = nullptr;
+        info.codeSize = buf.size();
+        info.flags = 0;
+        info.pCode = reinterpret_cast<uint32_t *>( buf.data());
+
         vk::ShaderModule mod;
         vkAssertOk(vkCreateShaderModule(
                 device,

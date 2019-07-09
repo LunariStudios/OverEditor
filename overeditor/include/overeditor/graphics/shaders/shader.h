@@ -10,7 +10,7 @@
 namespace overeditor::graphics::shaders {
     class Shader {
     private:
-        std::vector<uint8_t> buf;
+        std::vector<char> buf;
     public:
         explicit Shader(
                 const std::filesystem::path &filepath
