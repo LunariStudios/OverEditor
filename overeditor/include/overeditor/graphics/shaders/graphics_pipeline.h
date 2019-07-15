@@ -26,6 +26,8 @@ namespace overeditor::graphics::shaders {
                 const std::filesystem::path &resourceDir
         );
 
+        const std::vector<vk::CommandBuffer> &getCommandBuffers() const;
+
         ~GraphicsPipeline();
 
         const Shader &getFragShader() const;

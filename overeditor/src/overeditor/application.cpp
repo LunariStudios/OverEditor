@@ -124,7 +124,6 @@ namespace overeditor {
                 const vk::QueueFamilyProperties &prop = queueFamilyProperties[k];
                 LOG_INFO << INDENTATION(2) << "Queue family #" << k << " (" << prop.queueCount << "):";
                 LOG_INFO << INDENTATION(3) << "Flags (" << (uint32_t) prop.queueFlags << "):";
-                auto a = prop.queueFlags & vk::QueueFlagBits::eCompute;
                 LOG_INFO << LOG_QUEUE_FAMILY_BIT(vk::QueueFlagBits::eCompute, "Compute", prop.queueFlags);
                 LOG_INFO << LOG_QUEUE_FAMILY_BIT(vk::QueueFlagBits::eGraphics, "Graphics", prop.queueFlags);
                 LOG_INFO << LOG_QUEUE_FAMILY_BIT(vk::QueueFlagBits::eTransfer, "Transfer", prop.queueFlags);
@@ -158,13 +157,15 @@ namespace overeditor {
         std::filesystem::path resDirectory = std::filesystem::current_path() / "res";
         LOG_INFO << "Using resources located at \"" << resDirectory.string() << "\"";
         graphicsContext = new graphics::shaders::GraphicsPipeline(*deviceContext, resDirectory);
+        renderer = new Renderer(deviceContext->getDevice());
         // Load shaders
-
         static utility::Event<float>::EventListener quitter = [&](float dt) {
             running = !glfwWindowShouldClose(window);
             if (glfwGetKey(window, GLFW_KEY_ESCAPE)) {
                 running = false;
             }
+            renderer->render(deviceContext->getQueueContext()->getGraphicsQueue(),
+                             deviceContext->getSwapChainContext()->getSwapchain(), *graphicsContext);
         };
         sceneTick.getEarlyStep() += &quitter;
         glfwShowWindow(window);
@@ -172,6 +173,7 @@ namespace overeditor {
 
     Application::~Application() {
         sceneTick.clear();
+        delete renderer;
         delete graphicsContext;
         delete deviceContext;
         vkDestroySurfaceKHR((VkInstance) instance, (VkSurfaceKHR) surface, nullptr);
@@ -185,5 +187,6 @@ namespace overeditor {
             const float deltaTime = 1.0F / 60;
             sceneTick(deltaTime);
         }
+        deviceContext->getDevice().waitIdle();
     }
 }

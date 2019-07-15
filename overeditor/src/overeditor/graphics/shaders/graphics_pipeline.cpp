@@ -32,7 +32,11 @@ namespace overeditor::graphics::shaders {
         );
         auto extent = deviceContext.getSwapChainContext()->getSwapchainExtent();
         // Viewport Stage
-        vk::Viewport viewport(0, 0, extent.width, extent.height, 0, 1);
+        vk::Viewport viewport(
+                0, 0,
+                extent.width, extent.height,
+                0, 1
+        );
         vk::Rect2D scissor(vk::Offset2D(), extent);
         vk::PipelineViewportStateCreateInfo viewportInfo(
                 (vk::PipelineViewportStateCreateFlags) 0,
@@ -102,12 +106,18 @@ namespace overeditor::graphics::shaders {
                 0, nullptr,
                 1, &colorAttachmentRef
         );
+        auto dep = vk::SubpassDependency(
+                VK_SUBPASS_EXTERNAL, 0,
+                vk::PipelineStageFlagBits::eColorAttachmentOutput,
+                vk::PipelineStageFlagBits::eColorAttachmentOutput,
+                (vk::AccessFlags) 0,
+                vk::AccessFlagBits::eColorAttachmentRead | vk::AccessFlagBits::eColorAttachmentWrite
+        );
         renderPass = device.createRenderPass(vk::RenderPassCreateInfo(
                 (vk::RenderPassCreateFlags) 0,
-                1,
-                &colorAttachment,
-                1,
-                &subpass
+                1, &colorAttachment,
+                1, &subpass,
+                1, &dep
         ));
         vk::GraphicsPipelineCreateInfo graphicsInfo(
                 (vk::PipelineCreateFlags) 0,
@@ -121,7 +131,7 @@ namespace overeditor::graphics::shaders {
                 &multisampler,
                 nullptr,
                 &colorBlending,
-                &dynamicState, layout, renderPass, 0, nullptr, -1
+                nullptr, layout, renderPass, 0, nullptr, -1
         );
         pipeline = device.createGraphicsPipeline(nullptr, graphicsInfo);
         auto swapchainContext = deviceContext.getSwapChainContext();
@@ -152,14 +162,33 @@ namespace overeditor::graphics::shaders {
         );
 
         commandBuffers = device.allocateCommandBuffers(
-                vk::CommandBufferAllocateInfo(commandPool, vk::CommandBufferLevel::ePrimary, framebuffers.size()));
-        for (size_t i = 0; i < commandBuffers.size(); i++) {
+                vk::CommandBufferAllocateInfo(
+                        commandPool,
+                        vk::CommandBufferLevel::ePrimary,
+                        framebuffers.size()
+                )
+        );
+        for (size_t i = 0; i < framebuffers.size(); i++) {
+            const auto &buf = commandBuffers[i];
+            const auto &framebuffer = framebuffers[i];
             vk::CommandBufferBeginInfo beginInfo(
                     (vk::CommandBufferUsageFlags) vk::CommandBufferUsageFlagBits::eSimultaneousUse
             );
-            const vk::CommandBuffer &buf = commandBuffers[i];
             buf.begin(beginInfo);
-            //buf.beginRenderPass(vk::RenderPassBeginInfo(),);
+            vk::ClearValue value = vk::ClearColorValue((std::array<float, 4>) {0.0F, 0.0f, 0.0f, 1.0f});
+            buf.beginRenderPass(
+                    vk::RenderPassBeginInfo(
+                            renderPass,
+                            framebuffer,
+                            vk::Rect2D(vk::Offset2D(), swapChainExtent),
+                            1, &value
+                    ),
+                    vk::SubpassContents::eInline
+            );
+            buf.bindPipeline(vk::PipelineBindPoint::eGraphics, pipeline);
+            buf.draw(3, 1, 0, 0);
+            buf.endRenderPass();
+            buf.end();
         }
     }
 
@@ -203,6 +232,10 @@ namespace overeditor::graphics::shaders {
 
     const vk::Pipeline &GraphicsPipeline::getPipeline() const {
         return pipeline;
+    }
+
+    const std::vector<vk::CommandBuffer> &GraphicsPipeline::getCommandBuffers() const {
+        return commandBuffers;
     }
 
 

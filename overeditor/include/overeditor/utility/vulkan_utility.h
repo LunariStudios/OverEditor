@@ -9,7 +9,7 @@
 #define vkAssertVar COMBINE(vkresult, __LINE__)
 #define _vkAssertOk(x, error_msg)\
     auto vkAssertVar = x;\
-    if( vkAssertVar != VK_SUCCESS) { \
+    if((VkResult) vkAssertVar != VK_SUCCESS) { \
         throw std::runtime_error(error_msg);\
     }
 #define vkAssertOkOr(x, error_msg) _vkAssertOk(x, std::string(error_msg) + ": " + vk::to_string((vk::Result) vkAssertVar) + ")")

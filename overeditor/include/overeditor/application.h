@@ -9,6 +9,7 @@
 #include <vulkan/vulkan.h>
 #include <vulkan/vulkan.hpp>
 #include <GLFW/glfw3.h>
+#include <overeditor/graphics/renderer.h>
 /**
  * The current version of OverEditor.
  * The OVEREDITOR_VERSION_MAJOR, OVEREDITOR_VERSION_MINOR and OVEREDITOR_VERSION_PATCH macros are defined by CMake
@@ -26,13 +27,14 @@ namespace overeditor {
         vk::Instance instance;
         vk::SurfaceKHR surface;
         // Graphics layer members
-        graphics::DeviceContext * deviceContext;
-        graphics::shaders::GraphicsPipeline * graphicsContext;
+        graphics::DeviceContext *deviceContext;
+        graphics::shaders::GraphicsPipeline *graphicsContext;
         // Engine layer members
         bool running;
         utility::StepFunction<float> sceneTick;
         utility::SuccessStatus instanceSuitable;
         GLFWwindow *window;
+        Renderer *renderer;
     public:
         Application();
 

@@ -69,13 +69,15 @@ namespace overeditor::graphics {
                     )
             );
             vk::ImageView view;
-            auto createImgViewResult = vkCreateImageView(
+
+            auto createImgViewResult = device.createImageView(&info, nullptr, &view);
+            /*vkCreateImageView(
                     device,
                     reinterpret_cast<VkImageViewCreateInfo *>(&info),
                     nullptr,
                     reinterpret_cast<VkImageView *>(&view)
-            );
-            if (createImgViewResult != VK_SUCCESS) {
+            );*/
+            if (createImgViewResult != vk::Result::eSuccess) {
                 throw std::runtime_error(
                         std::string("Unable to create image view: ") + vk::to_string((vk::Result) createImgViewResult));
             }
