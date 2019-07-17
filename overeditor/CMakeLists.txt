@@ -21,7 +21,7 @@ set(
 
         include/overeditor/graphics/requirements.h
         src/overeditor/graphics/requirements.cpp
-        include/overeditor/graphics/shaders/shader.h include/overeditor/graphics/shaders/graphics_pipeline.h src/overeditor/graphics/shaders/graphics_pipeline.cpp src/overeditor/graphics/shaders/shader.cpp include/overeditor/graphics/renderer.h)
+        include/overeditor/graphics/shaders/shader.h src/overeditor/graphics/shaders/shader.cpp)
 set(
         OVEREDITOR_COMMON
         include/overeditor/utility/collection_utility.h
@@ -46,7 +46,7 @@ set(
         ${OVEREDITOR_COMMON}
         ${OVEREDITOR_APPLICATION}
         ${OVEREDITOR_MAIN}
-)
+        include/overeditor/graphics/buffers/vertices.h include/overeditor/ecs/components/common.h include/overeditor/ecs/systems/rendering.h src/overeditor/graphics/buffers/vertices.cpp)
 add_executable(overeditor ${OVEREDITOR_ALL})
 
 set(
@@ -89,7 +89,7 @@ endif ()
 
 find_package(Vulkan REQUIRED)
 
-target_link_libraries(overeditor casc_static Vulkan::Vulkan plog glfw)
+target_link_libraries(overeditor casc_static Vulkan::Vulkan plog glfw glm entityx)
 
 target_include_directories(
         overeditor

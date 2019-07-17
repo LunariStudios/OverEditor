@@ -10,6 +10,10 @@ set(GLFW_VULKAN_STATIC ON CACHE BOOL "Enable static Vulkan Loader")
 
 add_subdirectory(CascLib)
 add_subdirectory(plog)
+set(GLM_TEST_ENABLE OFF)
+add_subdirectory(glm)
+add_subdirectory(entityx)
 find_package(Vulkan REQUIRED)
+find_package(glm REQUIRED)
 
 add_subdirectory(glfw)

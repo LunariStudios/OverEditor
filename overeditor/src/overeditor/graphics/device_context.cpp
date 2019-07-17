@@ -6,7 +6,7 @@ namespace overeditor::graphics {
             const PhysicalDeviceCandidate &dev,
             const Requirements &requirements,
             const vk::SurfaceKHR &surface
-    ) {
+    ) : candidate(dev) {
         const graphics::QueueFamilyIndices &qIndices = dev.getIndices();
 
         std::vector<vk::DeviceQueueCreateInfo> createQueueInfos;
@@ -51,6 +51,10 @@ namespace overeditor::graphics {
                                    << vk::to_string(value.colorSpace));
         LOG_VECTOR_WITH("Presentation modes", scSupport.getPresentModes(), 1, vk::to_string(value));
         swapChainContext = new SwapChainContext(device, qIndices, scSupport, surface);
+    }
+
+    const PhysicalDeviceCandidate &DeviceContext::getCandidate() const {
+        return candidate;
     }
 
     DeviceContext::~DeviceContext() {

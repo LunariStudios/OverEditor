@@ -5,11 +5,9 @@
 #include <overeditor/utility/success_status.h>
 #include <overeditor/graphics/swapchain_context.h>
 #include <overeditor/graphics/device_context.h>
-#include <overeditor/graphics/shaders/graphics_pipeline.h>
-#include <vulkan/vulkan.h>
-#include <vulkan/vulkan.hpp>
+#include <overeditor/ecs/systems/rendering.h>
+#include <entityx/entityx.h>
 #include <GLFW/glfw3.h>
-#include <overeditor/graphics/renderer.h>
 /**
  * The current version of OverEditor.
  * The OVEREDITOR_VERSION_MAJOR, OVEREDITOR_VERSION_MINOR and OVEREDITOR_VERSION_PATCH macros are defined by CMake
@@ -21,20 +19,19 @@
 #define OVEREDITOR_NAME "OverEditor"
 namespace overeditor {
 
-    class Application {
+    class Application : public entityx::EntityX {
     private:
         // Vulkan members
         vk::Instance instance;
         vk::SurfaceKHR surface;
         // Graphics layer members
         graphics::DeviceContext *deviceContext;
-        graphics::shaders::GraphicsPipeline *graphicsContext;
         // Engine layer members
         bool running;
         utility::StepFunction<float> sceneTick;
         utility::SuccessStatus instanceSuitable;
         GLFWwindow *window;
-        Renderer *renderer;
+        std::shared_ptr<overeditor::systems::graphics::RenderingSystem> renderingSystem;
     public:
         Application();
 
@@ -42,6 +39,9 @@ namespace overeditor {
 
         void run();
 
+        graphics::DeviceContext *getDeviceContext() const;
+
+        const std::shared_ptr<systems::graphics::RenderingSystem> &getRenderingSystem() const;
     };
 }
 

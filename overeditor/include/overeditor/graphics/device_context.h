@@ -12,6 +12,7 @@ namespace overeditor::graphics {
     private:
         QueueContext *queueContext;
         SwapChainContext *swapChainContext;
+        PhysicalDeviceCandidate candidate;
         vk::Device device;
     public:
         DeviceContext(
@@ -27,6 +28,8 @@ namespace overeditor::graphics {
         SwapChainContext *getSwapChainContext() const;
 
         const vk::Device &getDevice() const;
+
+        const PhysicalDeviceCandidate &getCandidate() const;
     };
 }
 #endif

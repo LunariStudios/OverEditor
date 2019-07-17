@@ -6,6 +6,7 @@
 #include <overeditor/graphics/querying.h>
 #include <overeditor/graphics/requirements.h>
 #include <overeditor/graphics/shaders/shader.h>
+#include <overeditor/ecs/systems/rendering.h>
 #include <vulkan/vulkan.hpp>
 
 #include <plog/Log.h>
@@ -88,6 +89,7 @@ namespace overeditor {
                                    reinterpret_cast<VkPhysicalDevice *>(devices.data()));
         // Create Window and Surface
         glfwWindowHint(GLFW_CLIENT_API, GLFW_NO_API);
+        glfwWindowHint(GLFW_RESIZABLE, GLFW_FALSE);
         window = glfwCreateWindow(600, 800, OVEREDITOR_NAME, nullptr, nullptr);
         glfwCreateWindowSurface((VkInstance) instance, window, nullptr, reinterpret_cast<VkSurfaceKHR *>(&surface));
         // Convert devices to candidates
@@ -154,27 +156,22 @@ namespace overeditor {
         LOG_INFO << "Elected device is \"" << elected.getName() << "\"";
         deviceContext = new graphics::DeviceContext(elected, deviceRequirements, surface);
         LOG_INFO << "Logical device created";
-        std::filesystem::path resDirectory = std::filesystem::current_path() / "res";
-        LOG_INFO << "Using resources located at \"" << resDirectory.string() << "\"";
-        graphicsContext = new graphics::shaders::GraphicsPipeline(*deviceContext, resDirectory);
-        renderer = new Renderer(deviceContext->getDevice());
         // Load shaders
         static utility::Event<float>::EventListener quitter = [&](float dt) {
             running = !glfwWindowShouldClose(window);
             if (glfwGetKey(window, GLFW_KEY_ESCAPE)) {
                 running = false;
             }
-            renderer->render(deviceContext->getQueueContext()->getGraphicsQueue(),
-                             deviceContext->getSwapChainContext()->getSwapchain(), *graphicsContext);
+            systems.update_all(1.0F / 60);
         };
         sceneTick.getEarlyStep() += &quitter;
         glfwShowWindow(window);
+        renderingSystem = systems.add<overeditor::systems::graphics::RenderingSystem>(*deviceContext);
+        systems.configure();
     }
 
     Application::~Application() {
         sceneTick.clear();
-        delete renderer;
-        delete graphicsContext;
         delete deviceContext;
         vkDestroySurfaceKHR((VkInstance) instance, (VkSurfaceKHR) surface, nullptr);
         instance.destroy();
@@ -188,5 +185,13 @@ namespace overeditor {
             sceneTick(deltaTime);
         }
         deviceContext->getDevice().waitIdle();
+    }
+
+    graphics::DeviceContext *Application::getDeviceContext() const {
+        return deviceContext;
+    }
+
+    const std::shared_ptr<systems::graphics::RenderingSystem> &Application::getRenderingSystem() const {
+        return renderingSystem;
     }
 }
