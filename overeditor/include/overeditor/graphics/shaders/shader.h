@@ -7,55 +7,82 @@
 #include <fstream>
 #include <string>
 #include <overeditor/graphics/device_context.h>
+#include <overeditor/graphics/buffers/vertices.h>
 
 namespace overeditor::graphics::shaders {
+
+    using DescriptorLayout = overeditor::utility::DescriptorLayout;
+    using VertexLayout = overeditor::utility::VertexLayout;
+
+    /**
+     * Represents the SPIR-V code of a shader, including layout information, usually useful for descriptor sets
+     */
     class ShaderSource {
     private:
+
+        /**
+         * SPIR-V code.
+         */
         std::vector<char> buf;
+        /**
+         * A vector of layouts where each element co-relates to a descriptor set layout.
+         * For example, you may have two layouts, one for the CameraMatrices descriptor set,
+         * and another for the shader uniforms.
+         */
+        std::vector<DescriptorLayout> descriptorLayouts;
+        VertexLayout shaderLayout;
     public:
-        explicit ShaderSource(
-                const std::filesystem::path &filepath
+        ShaderSource(
+                const std::filesystem::path &filepath,
+                std::vector<DescriptorLayout> layout,
+                VertexLayout shaderLayout
         );
 
-        vk::ShaderModule createModuleFor(const vk::Device &device);
+        vk::ShaderModule createModuleFor(const vk::Device &device) const;
 
+        const std::vector<DescriptorLayout> &getDescriptorLayouts() const;
+
+        const VertexLayout &getShaderLayout() const;
     };
 
 #define PIPELINE_NAME "main"
 
+    /**
+     * Represents shader pair (vertex and fragment) loaded into a device, ready to be used to render an object.
+     */
     class Shader {
     private:
+        const std::string name;
         const vk::Device *owner;
-        ShaderSource *fragment, *vertex;
+        ShaderSource fragSource, vertSource;
         vk::ShaderModule fragModule, vertModule;
         vk::Pipeline pipeline;
         vk::PipelineLayout layout;
+        std::vector<vk::DescriptorSetLayout> descriptorsLayouts;
     public:
-        Shader();
+        Shader(
+                std::string name,
+                const ShaderSource &fragment,
+                const ShaderSource &vertex,
+                const DeviceContext &deviceCtx,
+                const vk::RenderPass &renderPass
+        );
 
         ~Shader();
 
-        void initialize(
-                const DeviceContext &deviceCtx,
-                const vk::RenderPass &renderPass,
-                const std::filesystem::path &fragmentPath,
-                const std::filesystem::path &vertexPath
-        );
-
-        ShaderSource *getFragment() const;
-
-        ShaderSource *getVertex() const;
-
         const vk::Pipeline &getPipeline() const;
 
+        const vk::PipelineLayout &getLayout() const;
+
+        const ShaderSource &getFragSource() const;
+
+        const ShaderSource &getVertSource() const;
+
+        const std::string &getName() const;
+
+        const std::vector<vk::DescriptorSetLayout> &getDescriptorsLayouts() const;
     };
 
-    class ShaderInstance {
-    private:
-        const Shader *parent;
-        const vk::CommandBuffer buffer;
-    public:
 
-    };
 }
 #endif

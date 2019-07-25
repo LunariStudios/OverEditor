@@ -7,7 +7,6 @@
 #include <overeditor/utility/memory_utility.h>
 #include <overeditor/utility/string_utility.h>
 #include <overeditor/utility/success_status.h>
-#include <overeditor/utility/vulkan_utility.h>
 #include <plog/Record.h>
 
 namespace overeditor::graphics {

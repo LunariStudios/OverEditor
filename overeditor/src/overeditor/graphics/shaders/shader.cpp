@@ -1,9 +1,39 @@
+#include <utility>
+
+#include <utility>
+
+#include <utility>
+
 #include <overeditor/graphics/shaders/shader.h>
 #include <overeditor/utility/vulkan_utility.h>
+#include <overeditor/ecs/components/common.h>
 
 namespace overeditor::graphics::shaders {
 
-    ShaderSource::ShaderSource(const std::filesystem::path &filepath) : buf() {
+    void import_layouts(
+            const ShaderSource &source,
+            const vk::Device &device,
+            const vk::ShaderStageFlags &stage,
+            std::vector<vk::DescriptorSetLayout> &output
+    ) {
+        for (auto &layout:source.getDescriptorLayouts()) {
+            output.push_back(
+                    overeditor::utility::layouts::toDescriptorLayout(
+                            stage,
+                            device,
+                            layout
+                    )
+            );
+        }
+    }
+
+    ShaderSource::ShaderSource(
+            const std::filesystem::path &filepath,
+            std::vector<DescriptorLayout> layouts,
+            VertexLayout shaderLayout
+    ) : buf(),
+        shaderLayout(std::move(shaderLayout)),
+        descriptorLayouts(std::move(layouts)) {
         std::ifstream file(filepath, std::ios::ate | std::ios::binary);
         if (!file.is_open()) {
             throw std::runtime_error(std::string("Unable to open file: ") + filepath.string());
@@ -15,40 +45,41 @@ namespace overeditor::graphics::shaders {
         file.close();
     }
 
-    vk::ShaderModule ShaderSource::createModuleFor(const vk::Device &device) {
-        VkShaderModuleCreateInfo info;
-        info.sType = VK_STRUCTURE_TYPE_SHADER_MODULE_CREATE_INFO;
-        info.pNext = nullptr;
-        info.codeSize = buf.size();
-        info.flags = 0;
-        info.pCode = reinterpret_cast<uint32_t *>( buf.data());
-
-        vk::ShaderModule mod;
-        vkAssertOk(vkCreateShaderModule(
-                device,
-                reinterpret_cast<VkShaderModuleCreateInfo *>(&info),
-                nullptr,
-                reinterpret_cast<VkShaderModule *>(&mod)
-        ));
-        return mod;
+    vk::ShaderModule ShaderSource::createModuleFor(
+            const vk::Device &device
+    ) const {
+        return device.createShaderModule(
+                vk::ShaderModuleCreateInfo(
+                        (vk::ShaderModuleCreateFlags) 0,
+                        buf.size(),
+                        reinterpret_cast<const uint32_t *>( buf.data())
+                )
+        );
     }
 
-    Shader::Shader() : owner(nullptr), fragment(nullptr), vertex(nullptr) {
-
+    const std::vector<DescriptorLayout> &ShaderSource::getDescriptorLayouts() const {
+        return descriptorLayouts;
     }
 
-    void Shader::initialize(
+    const VertexLayout &ShaderSource::getShaderLayout() const {
+        return shaderLayout;
+    }
+
+
+    Shader::Shader(
+            std::string name,
+            const ShaderSource &fragment,
+            const ShaderSource &vertex,
             const DeviceContext &deviceCtx,
-            const vk::RenderPass &renderPass,
-            const std::filesystem::path &fragmentPath,
-            const std::filesystem::path &vertexPath
-    ) {
-        auto device = deviceCtx.getDevice();
+            const vk::RenderPass &renderPass
+    ) : name(std::move(name)),
+        owner(nullptr),
+        descriptorsLayouts(),
+        fragSource(fragment), vertSource(vertex) {
+        const auto &device = deviceCtx.getDevice();
         owner = &device;
-        fragment = new ShaderSource(fragmentPath);
-        vertex = new ShaderSource(vertexPath);
-        fragModule = fragment->createModuleFor(device);
-        vertModule = vertex->createModuleFor(device);
+        fragModule = fragment.createModuleFor(device);
+        vertModule = vertex.createModuleFor(device);
         vk::PipelineShaderStageCreateInfo fragmentInfo(
                 (vk::PipelineShaderStageCreateFlags) 0, //Flags
                 vk::ShaderStageFlagBits::eFragment,// Stage
@@ -61,11 +92,26 @@ namespace overeditor::graphics::shaders {
                 vertModule,  // Module
                 PIPELINE_NAME //Name
         );
-        vk::PipelineShaderStageCreateInfo shaderStages[2] = {
+        std::vector<vk::PipelineShaderStageCreateInfo> shaderStages = {
                 vertexInfo, fragmentInfo
         };
+
+        std::vector<vk::VertexInputBindingDescription> vertexBindings;
+        std::vector<vk::VertexInputAttributeDescription> vertexAttributes;
+        auto &vLayout = vertex.getShaderLayout();
+        auto &elements = vLayout.getElements();
+        vertexBindings.emplace_back(
+                0,
+                static_cast<uint32_t >(vLayout.getStride()),
+                vk::VertexInputRate::eVertex
+        );
+        vertexAttributes.emplace_back(
+                0, 0, vk::Format::eR32G32B32A32Sfloat, 0
+        );
         auto vertexInputInfo = vk::PipelineVertexInputStateCreateInfo(
-                (vk::PipelineVertexInputStateCreateFlags) 0
+                (vk::PipelineVertexInputStateCreateFlags) 0,
+                vertexBindings.size(), vertexBindings.data(),
+                vertexAttributes.size(), vertexAttributes.data()
         );
         vk::PipelineInputAssemblyStateCreateInfo inputAssembly(
                 (vk::PipelineInputAssemblyStateCreateFlags) 0,
@@ -123,18 +169,34 @@ namespace overeditor::graphics::shaders {
                 2,
                 dynamicStates
         );
-
+        import_layouts(
+                vertex, device,
+                vk::ShaderStageFlagBits::eVertex,
+                descriptorsLayouts
+        );
+        import_layouts(
+                fragment, device,
+                vk::ShaderStageFlagBits::eFragment,
+                descriptorsLayouts
+        );
+        std::vector<vk::PushConstantRange> ranges = {
+                vk::PushConstantRange(
+                        vk::ShaderStageFlagBits::eVertex,
+                        0, sizeof(CameraMatrices)
+                )
+        };
         layout = device.createPipelineLayout(
                 vk::PipelineLayoutCreateInfo(
-                        (vk::PipelineLayoutCreateFlags) 0
+                        (vk::PipelineLayoutCreateFlags) 0,
+                        descriptorsLayouts.size(), descriptorsLayouts.data(),
+                        ranges.size(), ranges.data()
                 )
         );
 
-
         vk::GraphicsPipelineCreateInfo graphicsInfo(
                 (vk::PipelineCreateFlags) 0,
-                2,// Stage count
-                shaderStages, //
+                shaderStages.size(),// Stage count
+                shaderStages.data(), //
                 &vertexInputInfo,
                 &inputAssembly,
                 nullptr,
@@ -157,13 +219,29 @@ namespace overeditor::graphics::shaders {
         owner->destroy(layout);
         owner->destroy(fragModule);
         owner->destroy(vertModule);
+        for (auto &l : descriptorsLayouts) {
+            owner->destroy(l);
+        }
     }
 
-    ShaderSource *Shader::getFragment() const {
-        return fragment;
+    const vk::PipelineLayout &Shader::getLayout() const {
+        return layout;
     }
 
-    ShaderSource *Shader::getVertex() const {
-        return vertex;
+    const ShaderSource &Shader::getFragSource() const {
+        return fragSource;
     }
+
+    const ShaderSource &Shader::getVertSource() const {
+        return vertSource;
+    }
+
+    const std::vector<vk::DescriptorSetLayout> &Shader::getDescriptorsLayouts() const {
+        return descriptorsLayouts;
+    }
+
+    const std::string &Shader::getName() const {
+        return name;
+    }
+
 }

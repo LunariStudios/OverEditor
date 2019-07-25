@@ -46,7 +46,15 @@ set(
         ${OVEREDITOR_COMMON}
         ${OVEREDITOR_APPLICATION}
         ${OVEREDITOR_MAIN}
-        include/overeditor/graphics/buffers/vertices.h include/overeditor/ecs/components/common.h include/overeditor/ecs/systems/rendering.h src/overeditor/graphics/buffers/vertices.cpp)
+        include/overeditor/graphics/buffers/vertices.h
+        include/overeditor/ecs/components/common.h
+        include/overeditor/ecs/systems/rendering.h
+        src/overeditor/graphics/buffers/vertices.cpp
+        include/overeditor/utility/memory_layout.h
+        src/overeditor/utility/memory_layout.cpp
+        src/overeditor/ecs/systems/rendering.cpp
+        src/overeditor/ecs/components/common.cpp
+)
 add_executable(overeditor ${OVEREDITOR_ALL})
 
 set(

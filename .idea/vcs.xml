@@ -4,7 +4,9 @@
     <mapping directory="$PROJECT_DIR$" vcs="Git" />
     <mapping directory="$PROJECT_DIR$/thirdparty/CascLib" vcs="Git" />
     <mapping directory="$PROJECT_DIR$/thirdparty/eigen" vcs="Git" />
+    <mapping directory="$PROJECT_DIR$/thirdparty/entityx" vcs="Git" />
     <mapping directory="$PROJECT_DIR$/thirdparty/glfw" vcs="Git" />
+    <mapping directory="$PROJECT_DIR$/thirdparty/glm" vcs="Git" />
     <mapping directory="$PROJECT_DIR$/thirdparty/plog" vcs="Git" />
   </component>
 </project>

@@ -1,75 +1,134 @@
 #ifndef OVEREDITOR_COMMON_H
 #define OVEREDITOR_COMMON_H
 
+#include <map>
 #include <glm/glm.hpp>
 #include <glm/gtx/quaternion.hpp>
 #include <vulkan/vulkan.hpp>
 #include <overeditor/graphics/buffers/vertices.h>
+#include <overeditor/graphics/shaders/shader.h>
 
 struct Transform {
+    static glm::vec3 getForward(const Transform &transform);
+
+    static glm::vec3 getUp(const Transform &transform);
+
+    static glm::vec3 getRight(const Transform &transform);
+
     explicit Transform(
             const glm::vec3 &position = glm::vec3(),
             const glm::quat &rotation = glm::quat(1, 0, 0, 0),
             const glm::vec3 &scale = glm::vec3()
-    ) : position(position),
-        rotation(rotation),
-        scale(scale) {}
+    );
 
     glm::vec3 position;
     glm::quat rotation;
     glm::vec3 scale;
 };
 
+struct CameraMatrices {
+    glm::mat4 view;
+    glm::mat4 project;
+};
+
+struct Camera {
+    using ShaderPtr = overeditor::graphics::shaders::Shader *;
+    float depth;
+    float fieldOfView;
+    float aspectRatio;
+    std::map<ShaderPtr, vk::CommandBuffer> shaderBinds;
+    vk::Buffer matricesBuf;
+    vk::DeviceMemory matricesMemory;
+    vk::DescriptorSet matricesSet;
+    vk::DescriptorSetLayout matricesLayout;
+    vk::DescriptorPool descriptorPool;
+
+    static Camera forDevice(
+            const overeditor::graphics::DeviceContext &deviceContext,
+            float depth,
+            float fieldOfView,
+            float aspectRatio
+    ) {
+        const auto &device = deviceContext.getDevice();
+        auto layout = overeditor::utility::DescriptorLayout(
+                {
+                        overeditor::utility::DescriptorElement(
+                                sizeof(CameraMatrices),
+                                1,
+                                vk::DescriptorType::eUniformBuffer
+                        )
+                }
+        );
+        std::vector<vk::DescriptorPoolSize> sizes = overeditor::utility::layouts::toSizes(
+                layout
+        );
+
+        vk::DescriptorSetLayout dLayout = overeditor::utility::layouts::toDescriptorLayout(
+                vk::ShaderStageFlagBits::eVertex,
+                device, layout
+        );
+        auto mBuf = device.createBuffer(
+                vk::BufferCreateInfo(
+                        (vk::BufferCreateFlags) 0,
+                        sizeof(CameraMatrices),
+                        vk::BufferUsageFlagBits::eUniformBuffer
+                )
+        );
+        auto bufMem = overeditor::utility::vulkan::createBufferMemory(deviceContext, mBuf);
+
+        auto pool = device.createDescriptorPool(
+                vk::DescriptorPoolCreateInfo(
+                        (vk::DescriptorPoolCreateFlags) 0,
+                        1,
+                        sizes.size(), sizes.data()
+                )
+        );
+        auto sets = device.allocateDescriptorSets(
+                vk::DescriptorSetAllocateInfo(
+                        pool,
+                        1,
+                        &dLayout
+                )
+        );
+        return Camera(
+                depth, fieldOfView, aspectRatio, mBuf, bufMem, dLayout, sets[0], pool
+        );
+    }
+
+    Camera(
+            float depth,
+            float fieldOfView,
+            float aspectRatio,
+            vk::Buffer matricesBuffer,
+            vk::DeviceMemory memory,
+            vk::DescriptorSetLayout layout,
+            vk::DescriptorSet matricesSet,
+            vk::DescriptorPool pool
+    );
+};
+
 struct Drawable {
 public:
-    vk::CommandBuffer buf;
+    const vk::CommandBuffer buf;
+    const overeditor::graphics::shaders::Shader *shader;
+    const vk::DescriptorPool descriptorPool;
+    const std::vector<vk::DescriptorSet> descriptors;
 
     static Drawable forGeometry(
             const overeditor::graphics::DeviceContext &deviceContext,
-            const vk::Pipeline &pipeline,
+            const overeditor::graphics::shaders::Shader &shader,
             const vk::CommandPool &pool,
             const vk::RenderPass &renderPass,
             uint32_t subpass,
             const overeditor::graphics::GeometryBuffer &buffer
-    ) {
-        auto &device = deviceContext.getDevice();
-        vk::CommandBuffer buf;
-        auto info = vk::CommandBufferAllocateInfo(
-                pool,
-                vk::CommandBufferLevel::eSecondary,
-                1
+    );
 
-        );
-        device.allocateCommandBuffers(
-                &info,
-                &buf
-        );
-
-        auto inh = vk::CommandBufferInheritanceInfo(
-                renderPass, subpass
-        );
-        buf.begin(
-                vk::CommandBufferBeginInfo(
-                        (vk::CommandBufferUsageFlags) vk::CommandBufferUsageFlagBits::eSimultaneousUse |
-                        vk::CommandBufferUsageFlagBits::eRenderPassContinue,
-                        &inh
-                )
-        );
-        buf.bindPipeline(
-                vk::PipelineBindPoint::eGraphics,
-                pipeline
-        );
-        buf.draw(3, 1, 0, 0);
-        buf.end();
-        return Drawable(
-                buf
-        );
-
-    }
-
-    explicit Drawable(const vk::CommandBuffer &buf = nullptr) : buf(buf) {
-
-    }
+    explicit Drawable(
+            const vk::CommandBuffer &buf = nullptr,
+            const vk::DescriptorPool &descriptorPool = nullptr,
+            const overeditor::graphics::shaders::Shader *shader = nullptr,
+            std::vector<vk::DescriptorSet> descriptors = std::vector<vk::DescriptorSet>()
+    );
 };
 
 #endif //OVEREDITOR_COMMON_H

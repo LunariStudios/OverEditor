@@ -3,10 +3,11 @@
 **Beware, this is a W.I.P., experimental project. Nothing is stable for now, so expect bugs**
 
 The editor uses Vulkan for rendering *(VulkanHPP)*, and the following libraries
-* [CascLib](https://github.com/ladislav-zezula/CascLib.git): Handling
-* [Eigen](https://github.com/eigenteam/eigen-git-mirror): Math operations
-* [GLFW](https://github.com/glfw/glfw): Window creating
-* [PLOG](https://github.com/SergiusTheBest/plog): Logging  
+* [CascLib](https://github.com/ladislav-zezula/CascLib): Handling Blizzard's binary format
+* [entityx](https://github.com/alecthomas/entityx): ECS framework
+* [glm](https://github.com/g-truc/glm): Math operations
+* [glfw](https://github.com/glfw/glfw): Window creation
+* [plog](https://github.com/SergiusTheBest/plog): Logging  
 
 Officially supported Operating Systems are:
 * Windows

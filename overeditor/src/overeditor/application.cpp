@@ -11,7 +11,7 @@
 
 #include <plog/Log.h>
 #include <plog/Appenders/ColorConsoleAppender.h>
-
+#include <entityx/deps/Dependencies.h>
 #include <algorithm>
 
 namespace overeditor {
@@ -167,6 +167,7 @@ namespace overeditor {
         sceneTick.getEarlyStep() += &quitter;
         glfwShowWindow(window);
         renderingSystem = systems.add<overeditor::systems::graphics::RenderingSystem>(*deviceContext);
+        systems.add<entityx::deps::Dependency<Camera, Transform>>();
         systems.configure();
     }
 
@@ -183,6 +184,7 @@ namespace overeditor {
             //TODO: Variable delta time
             const float deltaTime = 1.0F / 60;
             sceneTick(deltaTime);
+            //LOG_INFO << "Tick";
         }
         deviceContext->getDevice().waitIdle();
     }
