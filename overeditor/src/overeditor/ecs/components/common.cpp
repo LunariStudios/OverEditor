@@ -82,6 +82,8 @@ Drawable Drawable::forGeometry(
     auto inh = vk::CommandBufferInheritanceInfo(
             renderPass, subpass
     );
+    LOG_INFO << "Begin recording";
+
     buf.begin(
             vk::CommandBufferBeginInfo(
                     (vk::CommandBufferUsageFlags) vk::CommandBufferUsageFlagBits::eSimultaneousUse |
@@ -90,31 +92,36 @@ Drawable Drawable::forGeometry(
             )
     );
     std::vector<vk::DescriptorPoolSize> descriptorPoolSizes = get_sizes(shader);
+    vk::DescriptorPool descriptorPool = nullptr;
+    std::vector<vk::DescriptorSet> sets;
+    if (!descriptorPoolSizes.empty()) {
 
-    const auto &layouts = shader.getDescriptorsLayouts();
-    auto descriptorPool = device.createDescriptorPool(
-            vk::DescriptorPoolCreateInfo(
-                    (vk::DescriptorPoolCreateFlags) 0,
-                    layouts.size(),
-                    descriptorPoolSizes.size(),
-                    descriptorPoolSizes.data()
-            )
-    );
-    auto sets = device.allocateDescriptorSets(
-            vk::DescriptorSetAllocateInfo(
-                    descriptorPool,
-                    layouts.size(),
-                    layouts.data()
-            )
-    );
-    LOG_INFO << "Begin recording";
-    buf.bindDescriptorSets(
-            vk::PipelineBindPoint::eGraphics,
-            shader.getLayout(),
-            0,
-            sets,
-            {}
-    );
+        const auto &layouts = shader.getDescriptorsLayouts();
+        descriptorPool = device.createDescriptorPool(
+                vk::DescriptorPoolCreateInfo(
+                        (vk::DescriptorPoolCreateFlags) 0,
+                        layouts.size(),
+                        descriptorPoolSizes.size(),
+                        descriptorPoolSizes.data()
+                )
+        );
+        sets = device.allocateDescriptorSets(
+                vk::DescriptorSetAllocateInfo(
+                        descriptorPool,
+                        layouts.size(),
+                        layouts.data()
+                )
+        );
+        if (!sets.empty()) {
+            buf.bindDescriptorSets(
+                    vk::PipelineBindPoint::eGraphics,
+                    shader.getLayout(),
+                    0,
+                    sets,
+                    {}
+            );
+        }
+    }
     buf.bindPipeline(
             vk::PipelineBindPoint::eGraphics,
             shader.getPipeline()
@@ -154,19 +161,10 @@ Drawable::Drawable(
 Camera::Camera(
         float depth,
         float fieldOfView,
-        float aspectRatio,
-        vk::Buffer matricesBuffer,
-        vk::DeviceMemory memory,
-        vk::DescriptorSetLayout layout,
-        vk::DescriptorSet matricesSet,
-        vk::DescriptorPool pool
+        float aspectRatio
 ) : depth(depth),
-    matricesBuf(matricesBuffer),
     fieldOfView(fieldOfView),
     aspectRatio(aspectRatio),
-    matricesMemory(memory),
-    matricesLayout(layout),
-    matricesSet(matricesSet),
-    descriptorPool(pool) {
+    matrices() {
 
 }

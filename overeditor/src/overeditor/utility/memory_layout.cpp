@@ -45,6 +45,7 @@ namespace overeditor::utility {
             const auto &elements = layout.getElements();
             auto end = elements.size();
             std::vector<vk::DescriptorSetLayoutBinding> bindings;
+
             for (size_t i = 0; i < end; i++) {
                 const auto &e = elements[i];
                 LOG_INFO << "Adding binding at position " << i << " (" << vk::to_string(e.getType()) << "("
@@ -74,4 +75,16 @@ namespace overeditor::utility {
 
     VertexElement::VertexElement(uint8_t elementLength, uint8_t elementCount, vk::Format format) : LayoutElement(
             elementLength, elementCount), format(format) {}
+
+    std::ostream &operator<<(std::ostream &os, const VertexElement &element) {
+        os << static_cast<const LayoutElement &>(element) << ", format: " << BYTE_STRING(element.getFormat()) << " @ "
+           << vk::to_string(element.format);
+        return os;
+    }
+
+    std::ostream &operator<<(std::ostream &os, const LayoutElement &element) {
+        os << "elementLength: " << BYTE_STRING(element.elementLength) << ", elementCount: "
+           << BYTE_STRING(element.elementCount);
+        return os;
+    }
 }

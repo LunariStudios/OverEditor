@@ -27,13 +27,34 @@ namespace overeditor::graphics::shaders {
         }
     }
 
+    void import_push_constants(
+            const ShaderSource &source,
+            const vk::ShaderStageFlags &stage,
+            std::vector<vk::PushConstantRange> &output
+    ) {
+        auto &constants = source.getPushConstantsLayout().getElements();
+        size_t offset = 0;
+        output.reserve(constants.size());
+        for (const overeditor::utility::LayoutElement &element : constants) {
+            size_t size = element.getSize();
+            output.emplace_back(
+                    stage,
+                    offset,
+                    size
+            );
+            offset += size;
+        }
+    }
+
     ShaderSource::ShaderSource(
             const std::filesystem::path &filepath,
             std::vector<DescriptorLayout> layouts,
-            VertexLayout shaderLayout
+            VertexLayout shaderLayout,
+            PushConstantsLayout pushConstantsLayout
     ) : buf(),
         shaderLayout(std::move(shaderLayout)),
-        descriptorLayouts(std::move(layouts)) {
+        descriptorLayouts(std::move(layouts)),
+        pushConstantsLayout(std::move(pushConstantsLayout)) {
         std::ifstream file(filepath, std::ios::ate | std::ios::binary);
         if (!file.is_open()) {
             throw std::runtime_error(std::string("Unable to open file: ") + filepath.string());
@@ -63,6 +84,10 @@ namespace overeditor::graphics::shaders {
 
     const VertexLayout &ShaderSource::getShaderLayout() const {
         return shaderLayout;
+    }
+
+    const PushConstantsLayout &ShaderSource::getPushConstantsLayout() const {
+        return pushConstantsLayout;
     }
 
 
@@ -96,18 +121,27 @@ namespace overeditor::graphics::shaders {
                 vertexInfo, fragmentInfo
         };
 
-        std::vector<vk::VertexInputBindingDescription> vertexBindings;
-        std::vector<vk::VertexInputAttributeDescription> vertexAttributes;
         auto &vLayout = vertex.getShaderLayout();
+        std::vector<vk::VertexInputBindingDescription> vertexBindings = {
+                vk::VertexInputBindingDescription(
+                        0,
+                        static_cast<uint32_t >(vLayout.getStride()),
+                        vk::VertexInputRate::eVertex
+                )
+        };
+        std::vector<vk::VertexInputAttributeDescription> vertexAttributes;
         auto &elements = vLayout.getElements();
-        vertexBindings.emplace_back(
-                0,
-                static_cast<uint32_t >(vLayout.getStride()),
-                vk::VertexInputRate::eVertex
-        );
-        vertexAttributes.emplace_back(
-                0, 0, vk::Format::eR32G32B32A32Sfloat, 0
-        );
+        vertexAttributes.reserve(elements.size());
+        for (size_t i = 0; i < elements.size(); ++i) {
+            const auto &element = elements[i];
+            LOG_INFO << "Pushing Vertex element " << i << " VertexElement(" << element << ")";
+            vertexAttributes.emplace_back(
+                    i,
+                    0,
+                    element.getFormat(), 0
+
+            );
+        }
         auto vertexInputInfo = vk::PipelineVertexInputStateCreateInfo(
                 (vk::PipelineVertexInputStateCreateFlags) 0,
                 vertexBindings.size(), vertexBindings.data(),
@@ -179,12 +213,17 @@ namespace overeditor::graphics::shaders {
                 vk::ShaderStageFlagBits::eFragment,
                 descriptorsLayouts
         );
-        std::vector<vk::PushConstantRange> ranges = {
-                vk::PushConstantRange(
-                        vk::ShaderStageFlagBits::eVertex,
-                        0, sizeof(CameraMatrices)
-                )
-        };
+        std::vector<vk::PushConstantRange> ranges;
+        import_push_constants(
+                vertex,
+                vk::ShaderStageFlagBits::eVertex,
+                ranges
+        );
+        import_push_constants(
+                fragment,
+                vk::ShaderStageFlagBits::eFragment,
+                ranges
+        );
         layout = device.createPipelineLayout(
                 vk::PipelineLayoutCreateInfo(
                         (vk::PipelineLayoutCreateFlags) 0,

@@ -6,6 +6,7 @@
 
 using VertexLayout = overeditor::utility::VertexLayout;
 using DescriptorLayout = overeditor::utility::DescriptorLayout;
+using PushConstantsLayout = overeditor::utility::PushConstantsLayout;
 
 int main() {
     auto app = overeditor::Application();
@@ -23,31 +24,15 @@ int main() {
             overeditor::graphics::shaders::ShaderSource(
                     resDirectory / "frag.spv", {
                     },
-                    VertexLayout()
+                    VertexLayout(),
+                    PushConstantsLayout()
             ),
             overeditor::graphics::shaders::ShaderSource(
                     resDirectory / "vert.spv",
-                    {
-                            DescriptorLayout(
-                                    {
-                                            overeditor::utility::DescriptorElement(
-                                                    sizeof(glm::mat4) * 2,
-                                                    1,
-                                                    vk::DescriptorType::eUniformBuffer,
-                                                    true
-                                            )
-                                    }
-                            ),
-                            DescriptorLayout(
-                                    {
-                                            overeditor::utility::DescriptorElement(
-                                                    sizeof(glm::mat4),
-                                                    1,
-                                                    vk::DescriptorType::eUniformBuffer
-                                            )
-                                    }
-                            )
-                    },
+                    std::vector<DescriptorLayout>(
+                            {
+                            }
+                    ),
                     VertexLayout(
                             {
                                     overeditor::utility::VertexElement(
@@ -56,13 +41,22 @@ int main() {
                                             vk::Format::eR32G32B32Sfloat
                                     )
                             }
+                    ),
+                    PushConstantsLayout(
+                            {
+                                    overeditor::utility::LayoutElement(
+                                            sizeof(glm::mat4),
+                                            1
+                                    )
+                            }
                     )
+
             ),
             *ctx,
             renderPass
     );
     cube.assign<Transform>(
-            glm::vec3(10, 0, 20) //Position
+            glm::vec3(0, 0, 0) //Position
     );
     glm::vec3 cubeVertices[] = {
             glm::vec3(0.5, -0.5, 0.5),//0 BFL
@@ -101,11 +95,23 @@ int main() {
     auto &swapchain = *ctx->getSwapChainContext();
     auto ext = swapchain.getSwapchainExtent();
     camera.assign<Transform>(
-            glm::vec3(0, 0, -10)
+            glm::vec3(0, 0, 10),
+            glm::quat_identity<float, glm::precision::defaultp>(),
+            glm::vec3(1, 1, 1)
     );
     camera.assign<Camera>(
-            Camera::forDevice(*ctx, 100, 90, (float) ext.width / ext.height)
+            100,
+            90,
+            (float) ext.width / ext.height
     );
 
+    overeditor::utility::Event<float>::EventListener rotator = [&](float dt) {
+        Transform &t = *cube.component<Transform>();
+        glm::vec3 rot = glm::eulerAngles(t.rotation);
+        rot.x += 0.1;
+        t.rotation = glm::quat(rot);
+
+    };
+    app.getSceneTick().getEarlyStep() += &rotator;
     app.run();
 }

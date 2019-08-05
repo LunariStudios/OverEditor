@@ -1,6 +1,8 @@
 #include <cstdint>
 #include <vector>
 #include <vulkan/vulkan.hpp>
+#include <ostream>
+#include <overeditor/utility/string_utility.h>
 
 #ifndef OVEREDITOR_MEMORY_LAYOUT_H
 #define OVEREDITOR_MEMORY_LAYOUT_H
@@ -34,6 +36,8 @@ namespace overeditor::utility {
         uint8_t getSize() const {
             return elementLength * elementCount;
         }
+
+        friend std::ostream &operator<<(std::ostream &os, const LayoutElement &element);
     };
 
 
@@ -84,6 +88,7 @@ namespace overeditor::utility {
         vk::DescriptorType getType() const;
 
         bool isImported() const;
+
     };
 
     class VertexElement : public LayoutElement {
@@ -98,10 +103,12 @@ namespace overeditor::utility {
 
         vk::Format getFormat() const;
 
+        friend std::ostream &operator<<(std::ostream &os, const VertexElement &element);
     };
 
     typedef Layout<DescriptorElement> DescriptorLayout;
     typedef Layout<VertexElement> VertexLayout;
+    typedef Layout<LayoutElement> PushConstantsLayout;
 
     namespace layouts {
         vk::DescriptorSetLayout toDescriptorLayout(

@@ -13,6 +13,7 @@ namespace overeditor::graphics::shaders {
 
     using DescriptorLayout = overeditor::utility::DescriptorLayout;
     using VertexLayout = overeditor::utility::VertexLayout;
+    using PushConstantsLayout = overeditor::utility::PushConstantsLayout;
 
     /**
      * Represents the SPIR-V code of a shader, including layout information, usually useful for descriptor sets
@@ -31,12 +32,16 @@ namespace overeditor::graphics::shaders {
          */
         std::vector<DescriptorLayout> descriptorLayouts;
         VertexLayout shaderLayout;
+        PushConstantsLayout pushConstantsLayout;
     public:
         ShaderSource(
                 const std::filesystem::path &filepath,
                 std::vector<DescriptorLayout> layout,
-                VertexLayout shaderLayout
+                VertexLayout shaderLayout,
+                PushConstantsLayout pushConstantsLayout
         );
+
+        const PushConstantsLayout &getPushConstantsLayout() const;
 
         vk::ShaderModule createModuleFor(const vk::Device &device) const;
 

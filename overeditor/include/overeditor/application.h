@@ -41,6 +41,8 @@ namespace overeditor {
 
         graphics::DeviceContext *getDeviceContext() const;
 
+         utility::StepFunction<float> &getSceneTick() ;
+
         const std::shared_ptr<systems::graphics::RenderingSystem> &getRenderingSystem() const;
     };
 }

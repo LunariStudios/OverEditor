@@ -196,4 +196,8 @@ namespace overeditor {
     const std::shared_ptr<systems::graphics::RenderingSystem> &Application::getRenderingSystem() const {
         return renderingSystem;
     }
+
+     utility::StepFunction<float> &Application::getSceneTick()  {
+        return sceneTick;
+    }
 }
