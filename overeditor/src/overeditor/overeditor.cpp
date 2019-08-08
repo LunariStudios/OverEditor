@@ -31,6 +31,27 @@ int main() {
                     resDirectory / "vert.spv",
                     std::vector<DescriptorLayout>(
                             {
+                                    DescriptorLayout(
+                                            {
+                                                    // Camera matrix
+                                                    overeditor::utility::DescriptorElement(
+                                                            sizeof(CameraMatrices),
+                                                            1,
+                                                            vk::DescriptorType::eUniformBuffer,
+                                                            true
+                                                    ),
+                                            }
+                                    ),
+                                    DescriptorLayout(
+                                            {
+                                                    // Model matrix
+                                                    overeditor::utility::DescriptorElement(
+                                                            sizeof(glm::mat4),
+                                                            1,
+                                                            vk::DescriptorType::eUniformBuffer
+                                                    )
+                                            }
+                                    )
                             }
                     ),
                     VertexLayout(
@@ -44,10 +65,6 @@ int main() {
                     ),
                     PushConstantsLayout(
                             {
-                                    overeditor::utility::LayoutElement(
-                                            sizeof(glm::mat4),
-                                            1
-                                    )
                             }
                     )
 

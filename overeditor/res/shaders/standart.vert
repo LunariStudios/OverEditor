@@ -4,11 +4,16 @@
 layout(location = 0) in vec3 position;
 layout(location = 0) out vec3 fragColor;
 
-layout(push_constant) uniform Matrices {
-    mat4 mvp;
+layout(set = 0, binding = 0) uniform CameraMatrices {
+    mat4 view;
+    mat4 projection;
 } matrices;
 
+layout(set = 1, binding = 0) uniform ModelMatrix {
+    mat4 value;
+}model;
+
 void main() {
-    gl_Position = matrices.mvp * vec4(position, 1);
+    gl_Position = model.value * matrices.view * matrices.projection * vec4(position, 1);
     fragColor = vec3(1, 0, 0);
 }

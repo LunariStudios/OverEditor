@@ -28,6 +28,10 @@ struct Transform {
 
 using ShaderPtr = const overeditor::graphics::shaders::Shader *;
 
+std::vector<vk::DescriptorPoolSize> get_sizes(
+        const overeditor::graphics::shaders::Shader &shader
+);
+
 struct CameraMatrices {
     glm::mat4 view;
     glm::mat4 project;
@@ -51,9 +55,11 @@ struct Camera {
 struct Drawable {
 public:
     const vk::CommandBuffer buf;
+    const overeditor::graphics::GeometryBuffer *geometry;
     const overeditor::graphics::shaders::Shader *shader;
     const vk::DescriptorPool descriptorPool;
     const std::vector<vk::DescriptorSet> descriptors;
+
 
     static vk::CommandBuffer exportBufferFor(
             const Camera &camera,
@@ -112,7 +118,7 @@ public:
             if (!sets.empty()) {
                 buf.bindDescriptorSets(
                         vk::PipelineBindPoint::eGraphics,
-                        shader.getLayout(),
+                        shaderRef.getLayout(),
                         0,
                         sets,
                         {}
@@ -121,19 +127,20 @@ public:
         }
         buf.bindPipeline(
                 vk::PipelineBindPoint::eGraphics,
-                shader.getPipeline()
+                shaderRef.getPipeline()
         );
+        auto &geometry = *drawable.geometry;
         buf.bindVertexBuffers(
                 0,
                 {
-                        buffer.getVertexBuffer()
+                        geometry.getVertexBuffer()
                 }, {
                         0
                 }
         );
-        buf.bindIndexBuffer(buffer.getIndexBuffer(), 0, vk::IndexType::eUint16);
+        buf.bindIndexBuffer(geometry.getIndexBuffer(), 0, vk::IndexType::eUint16);
         buf.drawIndexed(
-                buffer.getTotalIndices(), 1, 0, 0, 0
+                geometry.getTotalIndices(), 1, 0, 0, 0
         );
         buf.end();
         return buf;
@@ -149,6 +156,7 @@ public:
     );
 
     explicit Drawable(
+            const overeditor::graphics::GeometryBuffer *buffer = nullptr,
             const vk::CommandBuffer &buf = nullptr,
             const vk::DescriptorPool &descriptorPool = nullptr,
             const overeditor::graphics::shaders::Shader *shader = nullptr,

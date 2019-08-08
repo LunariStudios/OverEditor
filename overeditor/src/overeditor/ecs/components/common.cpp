@@ -141,6 +141,7 @@ Drawable Drawable::forGeometry(
     buf.end();
     LOG_INFO << "End recording";
     return Drawable(
+            &buffer,
             buf,
             descriptorPool,
             &shader,
@@ -150,11 +151,12 @@ Drawable Drawable::forGeometry(
 }
 
 Drawable::Drawable(
+        const overeditor::graphics::GeometryBuffer *geo,
         const vk::CommandBuffer &buf,
         const vk::DescriptorPool &pool,
         const overeditor::graphics::shaders::Shader *shader,
         std::vector<vk::DescriptorSet> descriptors
-) : buf(buf), shader(shader),
+) : geometry(geo), buf(buf), shader(shader),
     descriptorPool(pool), descriptors(std::move(descriptors)) {
 }
 
