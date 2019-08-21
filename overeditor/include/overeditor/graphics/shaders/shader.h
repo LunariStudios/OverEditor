@@ -9,11 +9,11 @@
 #include <overeditor/graphics/device_context.h>
 #include <overeditor/graphics/buffers/vertices.h>
 
-namespace overeditor::graphics::shaders {
+namespace overeditor {
 
-    using DescriptorLayout = overeditor::utility::DescriptorLayout;
-    using VertexLayout = overeditor::utility::VertexLayout;
-    using PushConstantsLayout = overeditor::utility::PushConstantsLayout;
+    using DescriptorLayout = overeditor::DescriptorLayout;
+    using VertexLayout = overeditor::VertexLayout;
+    using PushConstantsLayout = overeditor::PushConstantsLayout;
 
     /**
      * Represents the SPIR-V code of a shader, including layout information, usually useful for descriptor sets
@@ -86,6 +86,22 @@ namespace overeditor::graphics::shaders {
         const std::string &getName() const;
 
         const std::vector<vk::DescriptorSetLayout> &getDescriptorsLayouts() const;
+
+        const std::vector<const DescriptorLayout *> &getDescriptors() const {
+            std::vector<const DescriptorLayout *> r;
+            auto selector = [&](const overeditor::DescriptorLayout &l) {
+                return &l;
+            };
+            auto &vd = vertSource.getDescriptorLayouts();
+            std::transform(
+                    vd.begin(), vd.end(), std::back_inserter(r), selector
+            );
+            auto &fd = fragSource.getDescriptorLayouts();
+            std::transform(
+                    fd.begin(), fd.end(), std::back_inserter(r), selector
+            );
+            return r;
+        }
     };
 
 

@@ -12,7 +12,7 @@
 #define LOG_REQUIREMENTS(name, v) LOG_INFO << "Required " << name << " are (" << v.size() << "):";\
     LOG_VECTOR_NO_HEADER(v, 1);
 
-namespace overeditor::graphics {
+namespace overeditor {
     class Requirements {
     private:
         std::vector<const char *> requiredExtensions, requiredLayers;
@@ -29,7 +29,7 @@ namespace overeditor::graphics {
         void checkRequirements(
                 const std::vector<vk::ExtensionProperties> &extensions,
                 const std::vector<vk::LayerProperties> &layers,
-                overeditor::utility::SuccessStatus &status
+                overeditor::SuccessStatus &status
         ) const;
     };
 

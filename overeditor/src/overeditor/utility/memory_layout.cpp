@@ -1,7 +1,7 @@
 #include <overeditor/utility/memory_layout.h>
 #include <plog/Log.h>
 
-namespace overeditor::utility {
+namespace overeditor {
 
 
     vk::DescriptorType DescriptorElement::getType() const {
@@ -37,7 +37,7 @@ namespace overeditor::utility {
             return vector;
         }
 
-        vk::DescriptorSetLayout toDescriptorLayout(
+        vk::DescriptorSetLayout toDescriptorSetLayout(
                 const vk::ShaderStageFlags &stage,
                 const vk::Device &device,
                 const DescriptorLayout &layout

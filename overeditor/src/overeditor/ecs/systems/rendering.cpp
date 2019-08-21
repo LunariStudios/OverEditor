@@ -3,76 +3,65 @@
 #include <glm/gtx/string_cast.hpp>
 #include <tuple>
 
-namespace overeditor::systems::graphics {
-    typedef std::tuple<Drawable, glm::mat4> RenderingTuple;
+namespace overeditor {
 
-    vk::CommandBuffer create_bind(
-            const vk::Device &device,
-            const vk::CommandPool &commandPool
-    ) {
-        vk::CommandBuffer buf;
-        auto i = vk::CommandBufferAllocateInfo(
-                commandPool,
-                vk::CommandBufferLevel::eSecondary,
-                1
-        );
-        device.allocateCommandBuffers(
-                &i,
-                &buf
-        );
-        return buf;
-    }
-
-    vk::CommandBuffer get_bind(
-            Camera &camera,
-            const vk::Device &device,
-            const vk::CommandPool &pool,
+    DrawingInstructions create_bind(
+            const Camera &camera,
+            const Drawable &drawable,
+            const DeviceContext &dev,
+            const vk::CommandPool &commandPool,
             const vk::RenderPass &renderPass,
-            const overeditor::graphics::shaders::Shader *shader,
-            glm::mat4 mvp
+            const vk::PipelineLayout &layout
     ) {
-        auto &bufs = camera.shaderBinds;
-        vk::CommandBuffer buf;
-        if (bufs.count(shader) == 0) {
-
-            buf = create_bind(device, pool);
-            bufs[shader] = buf;
-        } else {
-            buf = bufs[shader];
-        }
-
-        auto iInfo = vk::CommandBufferInheritanceInfo(
-                renderPass, 0
+        auto controller = DescriptorsController::createFor(
+                dev,
+                drawable.shader->getDescriptors(),
+                drawable.shader->getDescriptorsLayouts()
         );
-        buf.begin(
-                vk::CommandBufferBeginInfo(
-                        (vk::CommandBufferUsageFlags) vk::CommandBufferUsageFlagBits::eSimultaneousUse |
-                        vk::CommandBufferUsageFlagBits::eRenderPassContinue,
-                        &iInfo
+        DrawingInstructions instructions = DrawingInstructions(
+                controller,
+                Drawable::exportBufferFor(
+                        camera,
+                        controller,
+                        dev.getDevice(),
+                        commandPool,
+                        0,
+                        drawable
                 )
         );
-        /*buf.bindDescriptorSets(
-                vk::PipelineBindPoint::eGraphics,
-                shader.getLayout(), 0,
-                {camera.matricesSet},
-                {}
-        );*/
-        LOG_INFO << "Yay: " << glm::to_string(mvp);
-        buf.pushConstants(
-                shader->getLayout(),
-                vk::ShaderStageFlagBits::eVertex,
-                 0,
-                sizeof(glm::mat4),
-                &mvp
-        );
-        buf.end();
-        return buf;
+
+        return instructions;
+    }
+
+    vk::CommandBuffer &get_bind(
+            Camera &camera,
+            const Drawable &drawable,
+            const DeviceContext &device,
+            const vk::CommandPool &pool,
+            const vk::RenderPass &renderPass,
+            overeditor::Shader *const shader
+    ) {
+        auto &bufs = camera.instructions;
+
+        if (bufs.count(shader) == 0) {
+            bufs[shader] = create_bind(
+                    camera,
+                    drawable,
+                    device,
+                    pool,
+                    renderPass,
+                    shader->getLayout()
+            );
+        }
+
+        DrawingInstructions &ins = bufs[shader];
+        return ins.drawCommand;
     }
 
     std::vector<vk::CommandBuffer> &
     find_or_create(
-            std::map<overeditor::graphics::shaders::Shader *, std::vector<vk::CommandBuffer>> &map,
-            overeditor::graphics::shaders::Shader *pShader
+            std::map<ShaderPtr, std::vector<vk::CommandBuffer>> &map,
+            overeditor::Shader *pShader
     ) {
         auto it = map.count(pShader);
         if (it > 0) {
@@ -80,6 +69,9 @@ namespace overeditor::systems::graphics {
         }
         return map[pShader];
     }
+
+    // Drawable and it's model matrix
+    typedef std::tuple<Drawable, glm::mat4> RenderingTuple;
 
     void RenderingSystem::render(
             Camera &camera,
@@ -96,12 +88,10 @@ namespace overeditor::systems::graphics {
             auto &t = *transform;
             auto &d = *drawable;
             auto model = glm::translate(glm::toMat4(t.rotation)/* * glm::scale(glm::mat4(1), t.scale)*/, t.position);
-            LOG_INFO << "Model: " << glm::to_string(model);
             toRender.emplace_back(d, model);
         }
         if (toRender.empty()) {
             //Nothing to draw
-            LOG_INFO << "WWGP";
             return;
         }
 
@@ -117,28 +107,34 @@ namespace overeditor::systems::graphics {
                 0.1F,
                 camera.depth
         );
-        LOG_INFO << "View: " << glm::to_string(view);
-        LOG_INFO << "Projection: " << glm::to_string(projection);
+
 
         std::vector<vk::CommandBuffer> secondaryBuffers;
-        std::map<overeditor::graphics::shaders::Shader *, std::vector<vk::CommandBuffer>> executionMap;
+        // Groups objects to draw per shader
+        std::map<ShaderPtr, std::vector<vk::CommandBuffer>> executionMap;
 
         //Draw buffers
         for (auto &element : toRender) {
             Drawable &d = std::get<0>(element);
             glm::mat4 model = std::get<1>(element);
+            auto sdr = const_cast<overeditor::Shader *>(d.shader);
             std::vector<vk::CommandBuffer> &vec = find_or_create(
                     executionMap,
-                    const_cast<overeditor::graphics::shaders::Shader *>(d.shader)
+                    sdr
             );
             vec.push_back(
                     get_bind(
-                            camera, device, pool, renderPass, d.shader, projection * view * model
+                            camera,
+                            d,
+                            *context,
+                            pool,
+                            renderPass,
+                            sdr
                     )
             );
-            vec.push_back(d.buf);
+            //vec.push_back(d.buf);
         }
-        for (const std::pair<overeditor::graphics::shaders::Shader *const, std::vector<vk::CommandBuffer>> &element : executionMap) {
+        for (const auto &element : executionMap) {
             const auto &bufs = element.second;
             secondaryBuffers.insert(
                     secondaryBuffers.end(),
@@ -178,8 +174,9 @@ namespace overeditor::systems::graphics {
                 vk::RenderPassBeginInfo(
                         renderPass,
                         framebuffers[imageIndex],
-                        vk::Rect2D(vk::Offset2D(),
-                                   context->getSwapChainContext()->getSwapchainExtent()),
+                        vk::Rect2D(
+                                vk::Offset2D(),
+                                context->getSwapChainContext()->getSwapchainExtent()),
                         1,
                         &value
                 ),
@@ -201,7 +198,6 @@ namespace overeditor::systems::graphics {
         vkAssertOk(
                 queue.submit(1, &info, nullptr)
         )
-        LOG_INFO << "Submitted";
         vkAssertOk(
                 queue.presentKHR(
                         vk::PresentInfoKHR(
@@ -214,7 +210,7 @@ namespace overeditor::systems::graphics {
         queue.waitIdle();
     }
 
-    RenderingSystem::RenderingSystem(const overeditor::graphics::DeviceContext &context) {
+    RenderingSystem::RenderingSystem(const overeditor::DeviceContext &context) {
         RenderingSystem::context = &context;
         auto scContext = context.getSwapChainContext();
         vk::AttachmentDescription colorAttachment(

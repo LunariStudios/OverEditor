@@ -1,13 +1,13 @@
 #include <overeditor/graphics/device_context.h>
 
-namespace overeditor::graphics {
+namespace overeditor {
 
     DeviceContext::DeviceContext(
             const PhysicalDeviceCandidate &dev,
             const Requirements &requirements,
             const vk::SurfaceKHR &surface
     ) : candidate(dev) {
-        const graphics::QueueFamilyIndices &qIndices = dev.getIndices();
+        const QueueFamilyIndices &qIndices = dev.getIndices();
 
         std::vector<vk::DeviceQueueCreateInfo> createQueueInfos;
         uint32_t graphicsIndex, presentationIndex;
@@ -45,7 +45,7 @@ namespace overeditor::graphics {
             throw e;
         }
         queueContext = new QueueContext(device, qIndices, graphicsIndex, presentationIndex);
-        const overeditor::graphics::SwapchainSupportDetails &scSupport = dev.getSwapchainSupportDetails();
+        const overeditor::SwapchainSupportDetails &scSupport = dev.getSwapchainSupportDetails();
         LOG_VECTOR_WITH("Surface formats", scSupport.getSurfaceFormats(), 1,
                         "Format: " << vk::to_string(value.format) << ", color space: "
                                    << vk::to_string(value.colorSpace));

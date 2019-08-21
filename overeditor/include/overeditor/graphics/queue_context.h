@@ -8,7 +8,7 @@
 #include <vulkan/vulkan.hpp>
 #include <overeditor/graphics/queue_families.h>
 
-namespace overeditor::graphics {
+namespace overeditor {
     class QueueContext {
     private:
         QueueFamilyIndices familyIndices;

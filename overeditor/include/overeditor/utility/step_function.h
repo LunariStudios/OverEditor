@@ -3,7 +3,7 @@
 
 #include <functional>
 
-namespace overeditor::utility {
+namespace overeditor {
     template<typename... T>
     class Event {
     public:

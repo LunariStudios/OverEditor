@@ -4,10 +4,10 @@
 #include <entityx/entityx.h>
 #include <overeditor/ecs/components/common.h>
 
-namespace overeditor::systems::graphics {
+namespace overeditor{
     class RenderingSystem : public entityx::System<RenderingSystem> {
     private:
-        const overeditor::graphics::DeviceContext *context;
+        const overeditor::DeviceContext *context;
         vk::CommandBuffer primaryBuffer;
         vk::CommandPool pool;
         std::vector<vk::Framebuffer> framebuffers;
@@ -23,7 +23,7 @@ namespace overeditor::systems::graphics {
         vk::RenderPass renderPass;
 
         explicit RenderingSystem(
-                const overeditor::graphics::DeviceContext &context
+                const overeditor::DeviceContext &context
         );
 
         void update(

@@ -1,14 +1,10 @@
 #include <utility>
 
-#include <utility>
-
-#include <utility>
-
 #include <overeditor/graphics/shaders/shader.h>
 #include <overeditor/utility/vulkan_utility.h>
 #include <overeditor/ecs/components/common.h>
 
-namespace overeditor::graphics::shaders {
+namespace overeditor {
 
     void import_layouts(
             const ShaderSource &source,
@@ -18,7 +14,7 @@ namespace overeditor::graphics::shaders {
     ) {
         for (auto &layout:source.getDescriptorLayouts()) {
             output.push_back(
-                    overeditor::utility::layouts::toDescriptorLayout(
+                    overeditor::layouts::toDescriptorSetLayout(
                             stage,
                             device,
                             layout
@@ -35,7 +31,7 @@ namespace overeditor::graphics::shaders {
         auto &constants = source.getPushConstantsLayout().getElements();
         size_t offset = 0;
         output.reserve(constants.size());
-        for (const overeditor::utility::LayoutElement &element : constants) {
+        for (const overeditor::LayoutElement &element : constants) {
             size_t size = element.getSize();
             output.emplace_back(
                     stage,

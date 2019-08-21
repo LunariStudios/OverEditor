@@ -21,9 +21,9 @@
 #include <overeditor/utility/memory_layout.h>
 #include <overeditor/utility/vulkan_utility.h>
 
-namespace overeditor::graphics {
+namespace overeditor {
 
-    using VertexLayout=overeditor::utility::VertexLayout;
+    using VertexLayout=overeditor::VertexLayout;
 
     class GeometryBuffer {
     private:
@@ -56,26 +56,27 @@ namespace overeditor::graphics {
         ) {
             const auto &device = deviceContext.getDevice();
             size_t vSize = vertexCount * layout.getStride();
-            auto vBuf = device.createBuffer(
-                    vk::BufferCreateInfo(
-                            (vk::BufferCreateFlags) 0,
-                            vSize,
-                            vk::BufferUsageFlagBits::eVertexBuffer
-                    )
-            );
-            auto vMem = overeditor::utility::vulkan::setupBufferMemory(
-                    deviceContext, vBuf, vertexData
+            vk::Buffer vBuf;
+            vk::DeviceMemory vMem;
+            overeditor::createAndPrepareBuffer(
+                    deviceContext,
+                    vSize,
+                    vBuf,
+                    vMem,
+                    vk::BufferUsageFlagBits::eVertexBuffer,
+                    vertexData
             );
             size_t iSize = indexCount * sizeof(uint16_t);
-            auto iBuf = device.createBuffer(
-                    vk::BufferCreateInfo(
-                            (vk::BufferCreateFlags) 0,
-                            iSize,
-                            vk::BufferUsageFlagBits::eIndexBuffer
-                    )
-            );
-            auto iMem = overeditor::utility::vulkan::setupBufferMemory(
-                    deviceContext, iBuf, indexData
+
+            vk::Buffer iBuf;
+            vk::DeviceMemory iMem;
+            overeditor::createAndPrepareBuffer(
+                    deviceContext,
+                    iSize,
+                    iBuf,
+                    iMem,
+                    vk::BufferUsageFlagBits::eIndexBuffer,
+                    vertexData
             );
             const vk::Device *devicePtr = &device;
             return GeometryBuffer(

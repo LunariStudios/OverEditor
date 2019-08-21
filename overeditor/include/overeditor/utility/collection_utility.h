@@ -21,7 +21,7 @@ LOG_INFO << header;\
 for (auto& value : v) {\
 LOG_INFO << INDENTATION(indent_level) << selector;\
 }
-namespace overeditor::utility::collection_utility {
+namespace overeditor {
 
     template<typename T>
     void add_range(const std::vector<T> &from, std::vector<T> &to) {

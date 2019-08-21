@@ -27,7 +27,7 @@ namespace overeditor {
         glfwInit();
         glfwSetErrorCallback(onError);
         LOG_INFO << "Using GLFW: " << glfwGetVersionString();
-        auto requirements = overeditor::graphics::VulkanRequirements::createOverEditorRequirements();
+        auto requirements = overeditor::VulkanRequirements::createOverEditorRequirements();
         const auto &instanceRequirements = requirements.getInstanceRequirements();
         const std::vector<const char *> &instanceRequiredExtensions = instanceRequirements.getRequiredExtensions();
         const auto &instanceRequiredLayers = instanceRequirements.getRequiredLayers();
@@ -93,14 +93,14 @@ namespace overeditor {
         window = glfwCreateWindow(600, 800, OVEREDITOR_NAME, nullptr, nullptr);
         glfwCreateWindowSurface((VkInstance) instance, window, nullptr, reinterpret_cast<VkSurfaceKHR *>(&surface));
         // Convert devices to candidates
-        std::vector<graphics::PhysicalDeviceCandidate> candidates;
+        std::vector<PhysicalDeviceCandidate> candidates;
         candidates.reserve(devices.size());
         for (const vk::PhysicalDevice &device : devices) {
             candidates.emplace_back(deviceRequirements, device, surface);
         }
         LOG_INFO << "Device candidates (" << candidates.size() << "):";
         for (int i = 0; i < candidates.size(); ++i) {
-            const graphics::PhysicalDeviceCandidate &c = candidates[i];
+            const PhysicalDeviceCandidate &c = candidates[i];
             LOG_INFO << INDENTATION(1) << "Device #" << i << " (\"" << c.getName() << "\", score: " << c.getScore()
                      << ")";
             const vk::PhysicalDeviceProperties &deviceProperties = c.getDeviceProperties();
@@ -136,14 +136,14 @@ namespace overeditor {
         // Remove devices that are not suitable
         candidates.erase(
                 std::remove_if(candidates.begin(), candidates.end(),
-                               [&](graphics::PhysicalDeviceCandidate &candidate) {
+                               [&](PhysicalDeviceCandidate &candidate) {
                                    return !candidate.getSuitableness().isSuccessful();
                                }
                 ), candidates.end()
         );
         // Sort by highest score
         std::sort(candidates.begin(), candidates.end(),
-                  [](graphics::PhysicalDeviceCandidate &a, graphics::PhysicalDeviceCandidate &b) {
+                  [](PhysicalDeviceCandidate &a, PhysicalDeviceCandidate &b) {
                       return a.getScore() > b.getScore();
                   }
         );
@@ -152,12 +152,12 @@ namespace overeditor {
             return;
         }
 
-        graphics::PhysicalDeviceCandidate elected = candidates[0];
+        PhysicalDeviceCandidate elected = candidates[0];
         LOG_INFO << "Elected device is \"" << elected.getName() << "\"";
-        deviceContext = new graphics::DeviceContext(elected, deviceRequirements, surface);
+        deviceContext = new DeviceContext(elected, deviceRequirements, surface);
         LOG_INFO << "Logical device created";
         // Load shaders
-        static utility::Event<float>::EventListener quitter = [&](float dt) {
+        static Event<float>::EventListener quitter = [&](float dt) {
             running = !glfwWindowShouldClose(window);
             if (glfwGetKey(window, GLFW_KEY_ESCAPE)) {
                 running = false;
@@ -166,7 +166,7 @@ namespace overeditor {
         };
         sceneTick.getEarlyStep() += &quitter;
         glfwShowWindow(window);
-        renderingSystem = systems.add<overeditor::systems::graphics::RenderingSystem>(*deviceContext);
+        renderingSystem = systems.add<overeditor::RenderingSystem>(*deviceContext);
         systems.add<entityx::deps::Dependency<Camera, Transform>>();
         systems.configure();
     }
@@ -189,15 +189,15 @@ namespace overeditor {
         deviceContext->getDevice().waitIdle();
     }
 
-    graphics::DeviceContext *Application::getDeviceContext() const {
+    DeviceContext *Application::getDeviceContext() const {
         return deviceContext;
     }
 
-    const std::shared_ptr<systems::graphics::RenderingSystem> &Application::getRenderingSystem() const {
+    const std::shared_ptr<RenderingSystem> &Application::getRenderingSystem() const {
         return renderingSystem;
     }
 
-     utility::StepFunction<float> &Application::getSceneTick()  {
+     StepFunction<float> &Application::getSceneTick()  {
         return sceneTick;
     }
 }

@@ -5,7 +5,7 @@
 #include <vector>
 #include <plog/Log.h>
 
-namespace overeditor::utility {
+namespace overeditor {
     class SuccessStatus {
     private:
         std::vector<std::string> errors;

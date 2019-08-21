@@ -4,9 +4,9 @@
 #include <overeditor/ecs/components/common.h>
 #include <overeditor/graphics/shaders/shader.h>
 
-using VertexLayout = overeditor::utility::VertexLayout;
-using DescriptorLayout = overeditor::utility::DescriptorLayout;
-using PushConstantsLayout = overeditor::utility::PushConstantsLayout;
+using VertexLayout = overeditor::VertexLayout;
+using DescriptorLayout = overeditor::DescriptorLayout;
+using PushConstantsLayout = overeditor::PushConstantsLayout;
 
 int main() {
     auto app = overeditor::Application();
@@ -19,22 +19,26 @@ int main() {
     LOG_INFO << "Using resources located at \"" << resDirectory.string() << "\"";
     auto &system = app.getRenderingSystem();
     auto &renderPass = system.get()->renderPass;
-    overeditor::graphics::shaders::Shader shader(
+    overeditor::Shader shader(
             "standart",
-            overeditor::graphics::shaders::ShaderSource(
-                    resDirectory / "frag.spv", {
-                    },
+            overeditor::ShaderSource(
+                    resDirectory / "frag.spv",
+                    std::vector<DescriptorLayout>(
+                            {
+
+                            }
+                    ),
                     VertexLayout(),
                     PushConstantsLayout()
             ),
-            overeditor::graphics::shaders::ShaderSource(
+            overeditor::ShaderSource(
                     resDirectory / "vert.spv",
                     std::vector<DescriptorLayout>(
                             {
                                     DescriptorLayout(
                                             {
                                                     // Camera matrix
-                                                    overeditor::utility::DescriptorElement(
+                                                    overeditor::DescriptorElement(
                                                             sizeof(CameraMatrices),
                                                             1,
                                                             vk::DescriptorType::eUniformBuffer,
@@ -45,7 +49,7 @@ int main() {
                                     DescriptorLayout(
                                             {
                                                     // Model matrix
-                                                    overeditor::utility::DescriptorElement(
+                                                    overeditor::DescriptorElement(
                                                             sizeof(glm::mat4),
                                                             1,
                                                             vk::DescriptorType::eUniformBuffer
@@ -56,7 +60,7 @@ int main() {
                     ),
                     VertexLayout(
                             {
-                                    overeditor::utility::VertexElement(
+                                    overeditor::VertexElement(
                                             sizeof(float),
                                             3,
                                             vk::Format::eR32G32B32Sfloat
@@ -93,7 +97,7 @@ int main() {
             0, 1, 4, 4, 5, 0,//front
             2, 3, 6, 6, 7, 2 //back
     };
-    auto b = overeditor::graphics::GeometryBuffer::create(
+    auto b = overeditor::GeometryBuffer::create(
             shader.getVertSource().getShaderLayout(),
             *ctx,
             cubeVertices, 8,
@@ -116,13 +120,15 @@ int main() {
             glm::quat_identity<float, glm::precision::defaultp>(),
             glm::vec3(1, 1, 1)
     );
-    camera.assign<Camera>(
-            100,
-            90,
-            (float) ext.width / ext.height
+    camera.assign_from_copy(
+            Camera::createFor(
+                    *ctx, renderPass, 100,
+                    90,
+                    (float) ext.width / ext.height
+            )
     );
 
-    overeditor::utility::Event<float>::EventListener rotator = [&](float dt) {
+    overeditor::Event<float>::EventListener rotator = [&](float dt) {
         Transform &t = *cube.component<Transform>();
         glm::vec3 rot = glm::eulerAngles(t.rotation);
         rot.x += 0.1;

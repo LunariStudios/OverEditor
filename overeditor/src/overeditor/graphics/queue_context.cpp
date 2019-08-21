@@ -1,6 +1,6 @@
 #include <overeditor/graphics/queue_context.h>
 
-namespace overeditor::graphics {
+namespace overeditor {
 
     QueueContext::QueueContext(
             const vk::Device &device,

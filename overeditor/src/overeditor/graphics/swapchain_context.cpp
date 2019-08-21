@@ -1,10 +1,10 @@
 #include <overeditor/graphics/swapchain_context.h>
 
-namespace overeditor::graphics {
+namespace overeditor {
     SwapChainContext::SwapChainContext(
             const vk::Device &device,
-            const overeditor::graphics::QueueFamilyIndices &qIndices,
-            const overeditor::graphics::SwapchainSupportDetails &scSupport,
+            const overeditor::QueueFamilyIndices &qIndices,
+            const overeditor::SwapchainSupportDetails &scSupport,
             const vk::SurfaceKHR &surface
     ) : devicePtr(&device), swapchainImages() {
         vk::SurfaceFormatKHR surfaceFormat = scSupport.selectSurfaceFormat();

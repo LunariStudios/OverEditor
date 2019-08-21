@@ -1,6 +1,6 @@
 #include <overeditor/graphics/image_context.h>
 
-namespace overeditor::graphics {
+namespace overeditor {
     ImageContext::ImageContext(
             const vk::Image &image,
             const vk::ImageView &imageView

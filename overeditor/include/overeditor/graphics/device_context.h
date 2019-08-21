@@ -5,14 +5,14 @@
 #include <overeditor/graphics/swapchain_context.h>
 #include <overeditor/graphics/queue_context.h>
 
-namespace overeditor::graphics {
+namespace overeditor {
 
 
     class DeviceContext {
     private:
         QueueContext *queueContext;
         SwapChainContext *swapChainContext;
-        overeditor::graphics::PhysicalDeviceCandidate candidate;
+        overeditor::PhysicalDeviceCandidate candidate;
         vk::Device device;
     public:
         DeviceContext(

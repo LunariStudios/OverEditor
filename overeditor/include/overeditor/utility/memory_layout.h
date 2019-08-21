@@ -6,7 +6,7 @@
 
 #ifndef OVEREDITOR_MEMORY_LAYOUT_H
 #define OVEREDITOR_MEMORY_LAYOUT_H
-namespace overeditor::utility {
+namespace overeditor {
 
     class LayoutElement {
     private:
@@ -111,7 +111,7 @@ namespace overeditor::utility {
     typedef Layout<LayoutElement> PushConstantsLayout;
 
     namespace layouts {
-        vk::DescriptorSetLayout toDescriptorLayout(
+        vk::DescriptorSetLayout toDescriptorSetLayout(
                 const vk::ShaderStageFlags &stage,
                 const vk::Device &device,
                 const DescriptorLayout &layout

@@ -22,23 +22,25 @@
 #define vkAssertOkOr(x, error_msg) _vkAssertOk(x, std::string(error_msg) + ": " + vk::to_string((vk::Result) vkAssertVar) + ")")
 
 #define vkAssertOk(x) _vkAssertOk(x, std::string("Error while executing ") + #x +": " + vk::to_string((vk::Result) vkAssertVar) + ")")
-namespace overeditor::utility::vulkan {
-    uint32_t getMemoryTypeIndex(
-            const overeditor::graphics::DeviceContext &device,
-            const vk::MemoryRequirements &requirements,
-            const vk::MemoryPropertyFlags &flags
+namespace overeditor {
+
+    void createBuffer(
+            const overeditor::DeviceContext &dev,
+            size_t size,
+            vk::Buffer &buf,
+            vk::DeviceMemory &mem,
+            vk::BufferUsageFlagBits bufUsage
     );
 
-    vk::DeviceMemory setupBufferMemory(
-            const overeditor::graphics::DeviceContext &deviceContext,
-            vk::Buffer &buffer,
+    void createAndPrepareBuffer(
+            const overeditor::DeviceContext &dev,
+            size_t size,
+            vk::Buffer &buf,
+            vk::DeviceMemory &mem,
+            vk::BufferUsageFlagBits bufUsage,
             void *data
     );
 
-    vk::DeviceMemory createBufferMemory(
-            const overeditor::graphics::DeviceContext &deviceContext,
-            vk::Buffer &buffer
-    );
 
 }
 #endif

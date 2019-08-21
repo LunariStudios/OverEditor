@@ -3,7 +3,7 @@
 
 #include <vulkan/vulkan.hpp>
 
-namespace overeditor::graphics {
+namespace overeditor {
 
     class ImageContext {
     private:

@@ -2,9 +2,9 @@
 #include <plog/Log.h>
 
 #define DISCRETE_GPU_BONUS 1500
-namespace overeditor::graphics {
+namespace overeditor {
     PhysicalDeviceCandidate::PhysicalDeviceCandidate(
-            const overeditor::graphics::Requirements &requirementss,
+            const overeditor::Requirements &requirementss,
             const vk::PhysicalDevice &device,
             const vk::SurfaceKHR &surface
     ) : device(device), indices(), score(0), suitableness(),
@@ -102,7 +102,7 @@ namespace overeditor::graphics {
         return std::string(deviceProperties.deviceName);
     }
 
-    const utility::SuccessStatus &PhysicalDeviceCandidate::getSuitableness() const {
+    const SuccessStatus &PhysicalDeviceCandidate::getSuitableness() const {
         return suitableness;
     }
 

@@ -25,13 +25,13 @@ namespace overeditor {
         vk::Instance instance;
         vk::SurfaceKHR surface;
         // Graphics layer members
-        graphics::DeviceContext *deviceContext;
+        DeviceContext *deviceContext;
         // Engine layer members
         bool running;
-        utility::StepFunction<float> sceneTick;
-        utility::SuccessStatus instanceSuitable;
+        StepFunction<float> sceneTick;
+        SuccessStatus instanceSuitable;
         GLFWwindow *window;
-        std::shared_ptr<overeditor::systems::graphics::RenderingSystem> renderingSystem;
+        std::shared_ptr<RenderingSystem> renderingSystem;
     public:
         Application();
 
@@ -39,11 +39,11 @@ namespace overeditor {
 
         void run();
 
-        graphics::DeviceContext *getDeviceContext() const;
+        DeviceContext *getDeviceContext() const;
 
-         utility::StepFunction<float> &getSceneTick() ;
+        StepFunction<float> &getSceneTick();
 
-        const std::shared_ptr<systems::graphics::RenderingSystem> &getRenderingSystem() const;
+        const std::shared_ptr<RenderingSystem> &getRenderingSystem() const;
     };
 }
 

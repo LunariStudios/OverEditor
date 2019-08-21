@@ -7,6 +7,7 @@
 #include <vulkan/vulkan.hpp>
 #include <overeditor/graphics/buffers/vertices.h>
 #include <overeditor/graphics/shaders/shader.h>
+#include <overeditor/graphics/descriptors.h>
 
 struct Transform {
     static glm::vec3 getForward(const Transform &transform);
@@ -26,43 +27,94 @@ struct Transform {
     glm::vec3 scale;
 };
 
-using ShaderPtr = const overeditor::graphics::shaders::Shader *;
+using ShaderPtr =  overeditor::Shader *;
 
 std::vector<vk::DescriptorPoolSize> get_sizes(
-        const overeditor::graphics::shaders::Shader &shader
+        const overeditor::Shader &shader
 );
 
 struct CameraMatrices {
     glm::mat4 view;
     glm::mat4 project;
 };
+struct DrawingInstructions;
+
 
 struct Camera {
     float depth;
     float fieldOfView;
     float aspectRatio;
     vk::RenderPass renderPass;
-    std::map<ShaderPtr, vk::CommandBuffer> shaderBinds;
-    CameraMatrices matrices;
+    CameraMatrices *matrices;
+    vk::Buffer matricesBuffer;
+    vk::DeviceMemory matricesMemory;
+    std::map<ShaderPtr, DrawingInstructions> instructions;
 
-    Camera(
+    static Camera createFor(
+            const overeditor::DeviceContext &dev,
+            vk::RenderPass renderPass,
             float depth,
             float fieldOfView,
             float aspectRatio
+    ) {
+        auto &device = dev.getDevice();
+        Camera camera{
+                depth,
+                fieldOfView,
+                aspectRatio,
+                renderPass
+
+        };
+        overeditor::createBuffer(
+                dev, sizeof(CameraMatrices),
+                camera.matricesBuffer,
+                camera.matricesMemory,
+                vk::BufferUsageFlagBits::eUniformBuffer
+        );
+
+
+        device.mapMemory(
+                camera.matricesMemory,
+                0,
+                sizeof(CameraMatrices),
+                (vk::MemoryMapFlags) 0,
+                reinterpret_cast<void **>(&camera.matrices)
+        );
+        return camera;
+    }
+};
+
+struct Drawable;
+
+struct DrawingInstructions {
+public:
+    overeditor::DescriptorsController descriptors;
+    vk::CommandBuffer drawCommand;
+
+    DrawingInstructions() = default;
+
+
+    DrawingInstructions(
+            const overeditor::DescriptorsController &descriptors,
+            const vk::CommandBuffer &drawCommand
+    );
+
+    static DrawingInstructions createFor(
+            const overeditor::DeviceContext &dev,
+            const Camera &camera,
+            const Drawable &drawable
     );
 };
 
 struct Drawable {
 public:
-    const vk::CommandBuffer buf;
-    const overeditor::graphics::GeometryBuffer *geometry;
-    const overeditor::graphics::shaders::Shader *shader;
-    const vk::DescriptorPool descriptorPool;
-    const std::vector<vk::DescriptorSet> descriptors;
-
+    const overeditor::GeometryBuffer *geometry;
+    const overeditor::Shader *shader;
+    const vk::CommandPool pool;
 
     static vk::CommandBuffer exportBufferFor(
             const Camera &camera,
+            const overeditor::DescriptorsController &descriptorsController,
             const vk::Device &device,
             const vk::CommandPool &pool,
             uint32_t subpass,
@@ -94,42 +146,23 @@ public:
         );
 
         const auto &shaderRef = *drawable.shader;
-        std::vector<vk::DescriptorPoolSize> descriptorPoolSizes = get_sizes(shaderRef);
-        vk::DescriptorPool descriptorPool = nullptr;
-        std::vector<vk::DescriptorSet> sets;
-        if (!descriptorPoolSizes.empty()) {
-
-            const auto &layouts = shaderRef.getDescriptorsLayouts();
-            descriptorPool = device.createDescriptorPool(
-                    vk::DescriptorPoolCreateInfo(
-                            (vk::DescriptorPoolCreateFlags) 0,
-                            layouts.size(),
-                            descriptorPoolSizes.size(),
-                            descriptorPoolSizes.data()
-                    )
-            );
-            sets = device.allocateDescriptorSets(
-                    vk::DescriptorSetAllocateInfo(
-                            descriptorPool,
-                            layouts.size(),
-                            layouts.data()
-                    )
-            );
-            if (!sets.empty()) {
-                buf.bindDescriptorSets(
-                        vk::PipelineBindPoint::eGraphics,
-                        shaderRef.getLayout(),
-                        0,
-                        sets,
-                        {}
-                );
-            }
-        }
         buf.bindPipeline(
                 vk::PipelineBindPoint::eGraphics,
                 shaderRef.getPipeline()
         );
         auto &geometry = *drawable.geometry;
+        auto descriptors = descriptorsController.getDescriptors();
+        if (!descriptors.empty()) {
+            buf.bindDescriptorSets(
+                    vk::PipelineBindPoint::eGraphics,
+                    shaderRef.getLayout(),
+                    0,
+                    descriptors,
+                    {
+
+                    }
+            );
+        }
         buf.bindVertexBuffers(
                 0,
                 {
@@ -147,21 +180,20 @@ public:
     }
 
     static Drawable forGeometry(
-            const overeditor::graphics::DeviceContext &deviceContext,
-            const overeditor::graphics::shaders::Shader &shader,
+            const overeditor::DeviceContext &deviceContext,
+            const overeditor::Shader &shader,
             const vk::CommandPool &pool,
             const vk::RenderPass &renderPass,
             uint32_t subpass,
-            const overeditor::graphics::GeometryBuffer &buffer
+            const overeditor::GeometryBuffer &buffer
     );
 
-    explicit Drawable(
-            const overeditor::graphics::GeometryBuffer *buffer = nullptr,
-            const vk::CommandBuffer &buf = nullptr,
-            const vk::DescriptorPool &descriptorPool = nullptr,
-            const overeditor::graphics::shaders::Shader *shader = nullptr,
-            std::vector<vk::DescriptorSet> descriptors = std::vector<vk::DescriptorSet>()
+    Drawable(
+            const overeditor::GeometryBuffer *geometry,
+            const overeditor::Shader *shader,
+            const vk::CommandPool &pool
     );
+
 };
 
 #endif //OVEREDITOR_COMMON_H

@@ -1,6 +1,6 @@
 #include <overeditor/graphics/requirements.h>
 
-namespace overeditor::graphics {
+namespace overeditor {
     const std::vector<const char *> &Requirements::getRequiredExtensions() const {
         return requiredExtensions;
     }
@@ -17,7 +17,7 @@ namespace overeditor::graphics {
     void Requirements::checkRequirements(
             const std::vector<vk::ExtensionProperties> &extensions,
             const std::vector<vk::LayerProperties> &layers,
-            overeditor::utility::SuccessStatus &status
+            overeditor::SuccessStatus &status
     ) const {
         for (const char *requirement : requiredExtensions) {
             if (std::none_of(extensions.begin(), extensions.end(), [&](const vk::ExtensionProperties &other) {
@@ -52,8 +52,8 @@ namespace overeditor::graphics {
     VulkanRequirements VulkanRequirements::createOverEditorRequirements() {
         // Instance
         std::vector<const char *> instanceExtensions, instanceLayers;
-        overeditor::utility::collection_utility::add_range(kRequiredInstanceLayers, instanceLayers);
-        overeditor::utility::collection_utility::add_range(kRequiredInstanceExtensions, instanceExtensions);
+        overeditor::add_range(kRequiredInstanceLayers, instanceLayers);
+        overeditor::add_range(kRequiredInstanceExtensions, instanceExtensions);
         uint32_t glfwExtensionCount = 0;
         const char **glfwExtensions;
         glfwExtensions = glfwGetRequiredInstanceExtensions(&glfwExtensionCount);
@@ -64,8 +64,8 @@ namespace overeditor::graphics {
 
         // Device
         std::vector<const char *> deviceExtensions, deviceLayers;
-        overeditor::utility::collection_utility::add_range(kRequiredDeviceLayers, deviceLayers);
-        overeditor::utility::collection_utility::add_range(kRequiredDeviceExtensions, deviceExtensions);
+        overeditor::add_range(kRequiredDeviceLayers, deviceLayers);
+        overeditor::add_range(kRequiredDeviceExtensions, deviceExtensions);
         return VulkanRequirements(
                 Requirements(deviceExtensions, deviceLayers),
                 Requirements(instanceExtensions, instanceLayers)

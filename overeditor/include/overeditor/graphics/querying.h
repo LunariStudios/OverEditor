@@ -9,7 +9,7 @@
 #include <overeditor/utility/success_status.h>
 #include <plog/Record.h>
 
-namespace overeditor::graphics {
+namespace overeditor {
 
 #define MEMORY_SCORE_MULTIPLIER 100
 
@@ -83,14 +83,14 @@ namespace overeditor::graphics {
         vk::PhysicalDevice device;
         QueueFamilyIndices indices;
         uint32_t score;
-        overeditor::utility::SuccessStatus suitableness;
+        overeditor::SuccessStatus suitableness;
         vk::PhysicalDeviceProperties deviceProperties;
         vk::PhysicalDeviceMemoryProperties memoryProperties;
         std::vector<vk::QueueFamilyProperties> queueFamilyProperties;
         SwapchainSupportDetails swapchainSupportDetails;
     public:
         PhysicalDeviceCandidate(
-                const overeditor::graphics::Requirements &requirements,
+                const overeditor::Requirements &requirements,
                 const vk::PhysicalDevice &device,
                 const vk::SurfaceKHR &surface
         );
@@ -101,7 +101,7 @@ namespace overeditor::graphics {
 
         uint32_t getScore() const;
 
-        const utility::SuccessStatus &getSuitableness() const;
+        const SuccessStatus &getSuitableness() const;
 
         const std::string getName() const;
 

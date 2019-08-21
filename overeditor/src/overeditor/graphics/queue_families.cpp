@@ -1,6 +1,6 @@
 #include <overeditor/graphics/queue_families.h>
 
-namespace overeditor::graphics {
+namespace overeditor {
     QueueFamily::QueueFamily() : index() {}
 
     bool QueueFamily::tryGet(uint32_t *result) const {

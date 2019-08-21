@@ -5,7 +5,7 @@
 #include <overeditor/graphics/querying.h>
 #include <overeditor/graphics/image_context.h>
 
-namespace overeditor::graphics {
+namespace overeditor {
     /**
      * Holds all the information about an Application's Vulkan SwapChain
      */
@@ -20,8 +20,8 @@ namespace overeditor::graphics {
 
         SwapChainContext(
                 const vk::Device &device,
-                const overeditor::graphics::QueueFamilyIndices &qIndices,
-                const overeditor::graphics::SwapchainSupportDetails &scSupport,
+                const overeditor::QueueFamilyIndices &qIndices,
+                const overeditor::SwapchainSupportDetails &scSupport,
                 const vk::SurfaceKHR &surface
         );
 

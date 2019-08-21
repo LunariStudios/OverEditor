@@ -6,7 +6,7 @@
 #include <ostream>
 #include <functional>
 
-namespace overeditor::graphics {
+namespace overeditor {
     class QueueFamily {
     protected:
         std::optional<uint32_t> index;
