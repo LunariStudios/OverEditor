@@ -25,11 +25,25 @@ namespace overeditor {
 
     using VertexLayout=overeditor::VertexLayout;
 
-    class GeometryBuffer {
+    /**
+     * Holds all the data required for a object to be drawn
+     */
+    struct GeometryBuffer {
     private:
+        /**
+         * Holds the data layout for a single vertex
+         */
         const VertexLayout layout;
+
+        /**
+         * How many indices are there?
+         */
         size_t totalIndices;
-        const vk::Device *host;
+
+        /**
+         * The device which will be used to draw this geometry
+         */
+        const vk::Device host;
         const vk::Buffer vertexBuffer, indexBuffer;
         const vk::DeviceMemory vertexMemory, indexMemory;
 
@@ -37,7 +51,7 @@ namespace overeditor {
         GeometryBuffer(
                 VertexLayout layout,
                 const size_t totalIndices,
-                const vk::Device *host,
+                const vk::Device host,
                 const vk::Buffer &vertexBuffer,
                 const vk::Buffer &indexBuffer,
                 const vk::DeviceMemory &vertexMemory,
@@ -46,6 +60,16 @@ namespace overeditor {
             vertexBuffer(vertexBuffer), indexBuffer(indexBuffer),
             vertexMemory(vertexMemory), indexMemory(indexMemory) {}
 
+        /**
+         * Uses the given deviceContext to allocate required resources for a new GeometryBuffer.
+         * @param layout The vertex layout of the geometry
+         * @param deviceContext
+         * @param vertexData
+         * @param vertexCount
+         * @param indexData
+         * @param indexCount
+         * @return
+         */
         static GeometryBuffer create(
                 const VertexLayout &layout,
                 const DeviceContext &deviceContext,
@@ -78,9 +102,8 @@ namespace overeditor {
                     vk::BufferUsageFlagBits::eIndexBuffer,
                     vertexData
             );
-            const vk::Device *devicePtr = &device;
             return GeometryBuffer(
-                    layout, indexCount, devicePtr,
+                    layout, indexCount, device,
                     vBuf, iBuf,
                     vMem, iMem
             );
@@ -90,11 +113,11 @@ namespace overeditor {
             return totalIndices;
         }
 
-        const vk::Buffer &getVertexBuffer() const {
+        vk::Buffer getVertexBuffer() const {
             return vertexBuffer;
         }
 
-        const vk::Buffer &getIndexBuffer() const {
+        vk::Buffer getIndexBuffer() const {
             return indexBuffer;
         }
     };

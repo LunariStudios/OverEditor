@@ -54,7 +54,7 @@ set(
         src/overeditor/utility/memory_layout.cpp
         src/overeditor/ecs/systems/rendering.cpp
         src/overeditor/ecs/components/common.cpp
-        include/overeditor/graphics/descriptors.h src/overeditor/graphics/descriptors.cpp)
+        include/overeditor/graphics/descriptors.h src/overeditor/graphics/descriptors.cpp include/overeditor/utility/singletons.h include/overeditor/graphics/common.h)
 add_executable(overeditor ${OVEREDITOR_ALL})
 
 set(

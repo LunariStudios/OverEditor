@@ -42,6 +42,12 @@ namespace overeditor {
         }
     }
 
+    ShaderIndices::ShaderIndices(
+            uint32_t cameraMatricesIndex,
+            uint32_t modelMatrix
+    ) : cameraMatricesIndex(cameraMatricesIndex), modelMatrix(modelMatrix) {
+
+    }
     ShaderSource::ShaderSource(
             const std::filesystem::path &filepath,
             std::vector<DescriptorLayout> layouts,
@@ -89,18 +95,21 @@ namespace overeditor {
 
     Shader::Shader(
             std::string name,
-            const ShaderSource &fragment,
-            const ShaderSource &vertex,
+            ShaderIndices indices,
+            ShaderSource fragment,
+            ShaderSource vertex,
             const DeviceContext &deviceCtx,
             const vk::RenderPass &renderPass
     ) : name(std::move(name)),
+        indices(indices),
         owner(nullptr),
         descriptorsLayouts(),
-        fragSource(fragment), vertSource(vertex) {
-        const auto &device = deviceCtx.getDevice();
-        owner = &device;
-        fragModule = fragment.createModuleFor(device);
-        vertModule = vertex.createModuleFor(device);
+        fragSource(std::move(fragment)), vertSource(std::move(vertex)) {
+        // First phase - Assign members
+        owner = deviceCtx.getDevice();
+        fragModule = fragSource.createModuleFor(owner);
+        vertModule = vertSource.createModuleFor(owner);
+        // Second phase - Init vulkan stuff
         vk::PipelineShaderStageCreateInfo fragmentInfo(
                 (vk::PipelineShaderStageCreateFlags) 0, //Flags
                 vk::ShaderStageFlagBits::eFragment,// Stage
@@ -200,12 +209,12 @@ namespace overeditor {
                 dynamicStates
         );
         import_layouts(
-                vertex, device,
+                vertex, owner,
                 vk::ShaderStageFlagBits::eVertex,
                 descriptorsLayouts
         );
         import_layouts(
-                fragment, device,
+                fragment, owner,
                 vk::ShaderStageFlagBits::eFragment,
                 descriptorsLayouts
         );
@@ -220,7 +229,7 @@ namespace overeditor {
                 vk::ShaderStageFlagBits::eFragment,
                 ranges
         );
-        layout = device.createPipelineLayout(
+        layout = owner.createPipelineLayout(
                 vk::PipelineLayoutCreateInfo(
                         (vk::PipelineLayoutCreateFlags) 0,
                         descriptorsLayouts.size(), descriptorsLayouts.data(),
@@ -242,7 +251,7 @@ namespace overeditor {
                 &colorBlending,
                 nullptr, layout, renderPass, 0, nullptr, -1
         );
-        pipeline = device.createGraphicsPipeline(nullptr, graphicsInfo);
+        pipeline = owner.createGraphicsPipeline(nullptr, graphicsInfo);
     }
 
     const vk::Pipeline &Shader::getPipeline() const {
@@ -250,12 +259,12 @@ namespace overeditor {
     }
 
     Shader::~Shader() {
-        owner->destroy(pipeline);
-        owner->destroy(layout);
-        owner->destroy(fragModule);
-        owner->destroy(vertModule);
+        owner.destroy(pipeline);
+        owner.destroy(layout);
+        owner.destroy(fragModule);
+        owner.destroy(vertModule);
         for (auto &l : descriptorsLayouts) {
-            owner->destroy(l);
+            owner.destroy(l);
         }
     }
 
@@ -277,6 +286,10 @@ namespace overeditor {
 
     const std::string &Shader::getName() const {
         return name;
+    }
+
+    const ShaderIndices &Shader::getIndices() const {
+        return indices;
     }
 
 }

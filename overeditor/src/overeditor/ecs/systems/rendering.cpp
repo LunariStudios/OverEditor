@@ -15,7 +15,7 @@ namespace overeditor {
     ) {
         auto controller = DescriptorsController::createFor(
                 dev,
-                drawable.shader->getDescriptors(),
+                drawable.shader->exportDescriptors(),
                 drawable.shader->getDescriptorsLayouts()
         );
         DrawingInstructions instructions = DrawingInstructions(

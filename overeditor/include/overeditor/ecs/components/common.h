@@ -9,6 +9,9 @@
 #include <overeditor/graphics/shaders/shader.h>
 #include <overeditor/graphics/descriptors.h>
 
+struct DrawingInstructions;
+struct Drawable;
+
 struct Transform {
     static glm::vec3 getForward(const Transform &transform);
 
@@ -37,7 +40,6 @@ struct CameraMatrices {
     glm::mat4 view;
     glm::mat4 project;
 };
-struct DrawingInstructions;
 
 
 struct Camera {
@@ -84,8 +86,10 @@ struct Camera {
     }
 };
 
-struct Drawable;
 
+/**
+ * Each camera has one of these for each drawable it needs to draw
+ */
 struct DrawingInstructions {
 public:
     overeditor::DescriptorsController descriptors;
@@ -111,6 +115,7 @@ public:
     const overeditor::GeometryBuffer *geometry;
     const overeditor::Shader *shader;
     const vk::CommandPool pool;
+    glm::mat4 model;
 
     static vk::CommandBuffer exportBufferFor(
             const Camera &camera,
@@ -121,6 +126,7 @@ public:
             const Drawable &drawable
     ) {
         vk::CommandBuffer buf;
+
         auto info = vk::CommandBufferAllocateInfo(
                 pool,
                 vk::CommandBufferLevel::eSecondary,
@@ -136,7 +142,6 @@ public:
                 camera.renderPass, subpass
         );
         LOG_INFO << "Begin recording";
-
         buf.begin(
                 vk::CommandBufferBeginInfo(
                         (vk::CommandBufferUsageFlags) vk::CommandBufferUsageFlagBits::eSimultaneousUse |
@@ -162,6 +167,7 @@ public:
 
                     }
             );
+
         }
         buf.bindVertexBuffers(
                 0,

@@ -1,6 +1,7 @@
 #include <utility>
 #include <overeditor/ecs/components/common.h>
 #include <overeditor/utility/vulkan_utility.h>
+#include <overeditor/graphics/common.h>
 
 glm::vec3 Transform::getForward(const Transform &transform) {
     return transform.rotation * glm::vec3(0, 0, 1);
@@ -28,6 +29,7 @@ void append_buffers_to(
         std::vector<vk::Buffer> &bufs,
         std::vector<vk::DeviceMemory> &memories
 ) {
+
     const auto &device = dev.getDevice();
     const auto &descriptors = src.getDescriptorLayouts();
     std::vector<uint32_t> q = {
@@ -88,9 +90,10 @@ Drawable Drawable::forGeometry(
     auto &device = deviceContext.getDevice();
     auto controller = overeditor::DescriptorsController::createFor(
             deviceContext,
-            shader.getDescriptors(),
+            shader.exportDescriptors(),
             shader.getDescriptorsLayouts()
     );
+
     return Drawable(
             &buffer,
             &shader,
@@ -114,10 +117,31 @@ DrawingInstructions DrawingInstructions::createFor(
 ) {
     const vk::Device &device = dev.getDevice();
     DrawingInstructions i;
+    const overeditor::Shader *shader = drawable.shader;
     i.descriptors = overeditor::DescriptorsController::createFor(
             dev,
-            drawable.shader->getDescriptors(),
-            drawable.shader->getDescriptorsLayouts()
+            shader->exportDescriptors(),
+            shader->getDescriptorsLayouts()
+    );
+    std::vector<overeditor::DescriptorLayout> layouts = {
+            overeditor::DescriptorLayout(
+                    {
+                            //Model matrix
+                            overeditor::DescriptorElement(
+                                    sizeof(glm::mat4),
+                                    1,
+                                    vk::DescriptorType::eUniformBuffer
+                            )
+                    }
+            )
+    };
+    const auto &descriptors = i.descriptors.getDescriptors();
+    std::vector<vk::WriteDescriptorSet> writes;
+    device.updateDescriptorSets(
+            {
+                    overeditor::updateModelMatrixWrite(i.descriptors, *shader)
+            }, {
+            }
     );
     i.drawCommand = Drawable::exportBufferFor(camera, i.descriptors, device, drawable.pool, 0, drawable);
     return i;

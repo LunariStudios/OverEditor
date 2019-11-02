@@ -10,7 +10,19 @@
 #include <overeditor/graphics/buffers/vertices.h>
 
 namespace overeditor {
+    struct ShaderIndices {
+        /**
+         * The index of the CameraMatrices descriptor set
+         */
+        uint32_t cameraMatricesIndex;
 
+        /**
+         * The index of the model matrix descriptor set
+         */
+        uint32_t modelMatrix;
+
+        ShaderIndices(uint32_t cameraMatricesIndex, uint32_t modelMatrix);
+    };
     using DescriptorLayout = overeditor::DescriptorLayout;
     using VertexLayout = overeditor::VertexLayout;
     using PushConstantsLayout = overeditor::PushConstantsLayout;
@@ -58,7 +70,8 @@ namespace overeditor {
     class Shader {
     private:
         const std::string name;
-        const vk::Device *owner;
+        const ShaderIndices indices;
+        vk::Device owner;
         ShaderSource fragSource, vertSource;
         vk::ShaderModule fragModule, vertModule;
         vk::Pipeline pipeline;
@@ -67,13 +80,16 @@ namespace overeditor {
     public:
         Shader(
                 std::string name,
-                const ShaderSource &fragment,
-                const ShaderSource &vertex,
+                ShaderIndices indices,
+                ShaderSource fragment,
+                ShaderSource vertex,
                 const DeviceContext &deviceCtx,
                 const vk::RenderPass &renderPass
         );
 
         ~Shader();
+
+        const ShaderIndices &getIndices() const;
 
         const vk::Pipeline &getPipeline() const;
 
@@ -87,7 +103,7 @@ namespace overeditor {
 
         const std::vector<vk::DescriptorSetLayout> &getDescriptorsLayouts() const;
 
-        const std::vector<const DescriptorLayout *> &getDescriptors() const {
+        std::vector<const DescriptorLayout *> exportDescriptors() const {
             std::vector<const DescriptorLayout *> r;
             auto selector = [&](const overeditor::DescriptorLayout &l) {
                 return &l;

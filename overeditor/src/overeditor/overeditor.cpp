@@ -19,18 +19,21 @@ int main() {
     LOG_INFO << "Using resources located at \"" << resDirectory.string() << "\"";
     auto &system = app.getRenderingSystem();
     auto &renderPass = system.get()->renderPass;
+    overeditor::ShaderSource frag(
+            resDirectory / "frag.spv",
+            std::vector<DescriptorLayout>(
+                    {
+
+                    }
+            ),
+            VertexLayout(),
+            PushConstantsLayout()
+    );
+
     overeditor::Shader shader(
             "standart",
-            overeditor::ShaderSource(
-                    resDirectory / "frag.spv",
-                    std::vector<DescriptorLayout>(
-                            {
-
-                            }
-                    ),
-                    VertexLayout(),
-                    PushConstantsLayout()
-            ),
+            overeditor::ShaderIndices(0, 1),
+            frag,
             overeditor::ShaderSource(
                     resDirectory / "vert.spv",
                     std::vector<DescriptorLayout>(

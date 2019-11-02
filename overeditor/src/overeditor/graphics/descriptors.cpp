@@ -60,13 +60,13 @@ namespace overeditor {
             std::vector<vk::DescriptorSetLayout> vkLayouts
     ) {
         const auto &device = deviceContext.getDevice();
-        std::vector<vk::DescriptorPoolSize> descriptorPoolSizes = get_sizes(layouts);
         vk::DescriptorPool descriptorPool = nullptr;
         std::vector<vk::DescriptorSet> sets;
         std::vector<vk::Buffer> buffers;
         std::vector<vk::DeviceMemory> memories;
-        append_buffers_to(layouts, deviceContext, buffers, memories);
-        if (!descriptorPoolSizes.empty()) {
+        if (!layouts.empty()) {
+            append_buffers_to(layouts, deviceContext, buffers, memories);
+            std::vector<vk::DescriptorPoolSize> descriptorPoolSizes = get_sizes(layouts);
 
             LOG_INFO << "Sizes " << descriptorPoolSizes.size() << " @ " << sizeof(vk::DescriptorPoolSize);
             descriptorPool = device.createDescriptorPool(
