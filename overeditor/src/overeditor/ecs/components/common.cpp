@@ -90,7 +90,7 @@ Drawable Drawable::forGeometry(
     auto &device = deviceContext.getDevice();
     auto controller = overeditor::DescriptorsController::createFor(
             deviceContext,
-            shader.exportDescriptors(),
+            shader.collectDescriptors(),
             shader.getDescriptorsLayouts()
     );
 
@@ -106,7 +106,7 @@ Drawable::Drawable(
         const overeditor::GeometryBuffer *geometry,
         const overeditor::Shader *shader,
         const vk::CommandPool &pool
-) : geometry(geometry), shader(shader), pool(pool) {
+) : geometry(geometry), shader(shader), pool(pool), model() {
 
 }
 
@@ -120,7 +120,7 @@ DrawingInstructions DrawingInstructions::createFor(
     const overeditor::Shader *shader = drawable.shader;
     i.descriptors = overeditor::DescriptorsController::createFor(
             dev,
-            shader->exportDescriptors(),
+            shader->collectDescriptors(),
             shader->getDescriptorsLayouts()
     );
     std::vector<overeditor::DescriptorLayout> layouts = {

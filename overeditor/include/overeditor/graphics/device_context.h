@@ -12,7 +12,7 @@ namespace overeditor {
     private:
         QueueContext *queueContext;
         SwapChainContext *swapChainContext;
-        overeditor::PhysicalDeviceCandidate candidate;
+        PhysicalDeviceCandidate candidate;
         vk::Device device;
     public:
         DeviceContext(

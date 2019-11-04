@@ -29,56 +29,60 @@ int main() {
             VertexLayout(),
             PushConstantsLayout()
     );
+    LOG_INFO << "Loaded frag shader";
+    overeditor::ShaderSource vert(
+            resDirectory / "vert.spv",
+            std::vector<DescriptorLayout>(
+                    {
+                            DescriptorLayout(
+                                    {
+                                            // Camera matrix
+                                            overeditor::DescriptorElement(
+                                                    sizeof(CameraMatrices),
+                                                    1,
+                                                    vk::DescriptorType::eUniformBuffer,
+                                                    true
+                                            ),
+                                    }
+                            ),
+                            DescriptorLayout(
+                                    {
+                                            // Model matrix
+                                            overeditor::DescriptorElement(
+                                                    sizeof(glm::mat4),
+                                                    1,
+                                                    vk::DescriptorType::eUniformBuffer
+                                            )
+                                    }
+                            )
+                    }
+            ),
+            VertexLayout(
+                    {
+                            overeditor::VertexElement(
+                                    sizeof(float),
+                                    3,
+                                    vk::Format::eR32G32B32Sfloat
+                            )
+                    }
+            ),
+            PushConstantsLayout(
+                    {
+                    }
+            )
+
+    );
+    LOG_INFO << "Loaded vert shader";
 
     overeditor::Shader shader(
             "standart",
             overeditor::ShaderIndices(0, 1),
             frag,
-            overeditor::ShaderSource(
-                    resDirectory / "vert.spv",
-                    std::vector<DescriptorLayout>(
-                            {
-                                    DescriptorLayout(
-                                            {
-                                                    // Camera matrix
-                                                    overeditor::DescriptorElement(
-                                                            sizeof(CameraMatrices),
-                                                            1,
-                                                            vk::DescriptorType::eUniformBuffer,
-                                                            true
-                                                    ),
-                                            }
-                                    ),
-                                    DescriptorLayout(
-                                            {
-                                                    // Model matrix
-                                                    overeditor::DescriptorElement(
-                                                            sizeof(glm::mat4),
-                                                            1,
-                                                            vk::DescriptorType::eUniformBuffer
-                                                    )
-                                            }
-                                    )
-                            }
-                    ),
-                    VertexLayout(
-                            {
-                                    overeditor::VertexElement(
-                                            sizeof(float),
-                                            3,
-                                            vk::Format::eR32G32B32Sfloat
-                                    )
-                            }
-                    ),
-                    PushConstantsLayout(
-                            {
-                            }
-                    )
-
-            ),
+            vert,
             *ctx,
             renderPass
     );
+    LOG_INFO << "std shader";
     cube.assign<Transform>(
             glm::vec3(0, 0, 0) //Position
     );

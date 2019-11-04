@@ -16,6 +16,7 @@ namespace overeditor {
         vk::DescriptorBufferInfo info(
                 buffer, 0, 0
         );
+        LOG_INFO << "Writing to " << destination << " @ " << buffer;
         return vk::WriteDescriptorSet(
                 destination,
                 0,

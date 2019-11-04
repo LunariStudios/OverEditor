@@ -13,10 +13,14 @@ add_subdirectory(CascLib)
 add_subdirectory(plog)
 set(GLM_TEST_ENABLE OFF)
 add_subdirectory(glm)
+target_include_directories(
+        glm_static
+        PUBLIC
+        glm
+)
 set(ENTITYX_BUILD_TESTING OFF)
 set(ENTITYX_BUILD_SHARED OFF)
 add_subdirectory(entityx)
 find_package(Vulkan REQUIRED)
-find_package(glm REQUIRED)
 
 add_subdirectory(glfw)

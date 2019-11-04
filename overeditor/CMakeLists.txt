@@ -97,7 +97,7 @@ endif ()
 
 find_package(Vulkan REQUIRED)
 
-target_link_libraries(overeditor casc_static Vulkan::Vulkan plog glfw glm entityx)
+target_link_libraries(overeditor casc_static Vulkan::Vulkan plog glfw glm_static entityx)
 
 target_include_directories(
         overeditor

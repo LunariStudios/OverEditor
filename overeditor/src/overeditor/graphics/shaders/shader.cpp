@@ -3,6 +3,7 @@
 #include <overeditor/graphics/shaders/shader.h>
 #include <overeditor/utility/vulkan_utility.h>
 #include <overeditor/ecs/components/common.h>
+#include <iostream>
 
 namespace overeditor {
 
@@ -48,6 +49,7 @@ namespace overeditor {
     ) : cameraMatricesIndex(cameraMatricesIndex), modelMatrix(modelMatrix) {
 
     }
+
     ShaderSource::ShaderSource(
             const std::filesystem::path &filepath,
             std::vector<DescriptorLayout> layouts,
@@ -66,6 +68,9 @@ namespace overeditor {
         file.seekg(SEEK_SET);
         file.read(buf.data(), fileSize);
         file.close();
+        for (auto &descriptorLayout :descriptorLayouts) {
+            LOG_INFO << overeditor::to_string(descriptorLayout);
+        }
     }
 
     vk::ShaderModule ShaderSource::createModuleFor(
@@ -126,7 +131,7 @@ namespace overeditor {
                 vertexInfo, fragmentInfo
         };
 
-        auto &vLayout = vertex.getShaderLayout();
+        auto &vLayout = vertSource.getShaderLayout();
         std::vector<vk::VertexInputBindingDescription> vertexBindings = {
                 vk::VertexInputBindingDescription(
                         0,
@@ -209,30 +214,31 @@ namespace overeditor {
                 dynamicStates
         );
         import_layouts(
-                vertex, owner,
+                vertSource, owner,
                 vk::ShaderStageFlagBits::eVertex,
                 descriptorsLayouts
         );
         import_layouts(
-                fragment, owner,
+                fragSource, owner,
                 vk::ShaderStageFlagBits::eFragment,
                 descriptorsLayouts
         );
         std::vector<vk::PushConstantRange> ranges;
         import_push_constants(
-                vertex,
+                vertSource,
                 vk::ShaderStageFlagBits::eVertex,
                 ranges
         );
         import_push_constants(
-                fragment,
+                fragSource,
                 vk::ShaderStageFlagBits::eFragment,
                 ranges
         );
         layout = owner.createPipelineLayout(
                 vk::PipelineLayoutCreateInfo(
                         (vk::PipelineLayoutCreateFlags) 0,
-                        descriptorsLayouts.size(), descriptorsLayouts.data(),
+                        descriptorsLayouts.size(),
+                        descriptorsLayouts.data(),
                         ranges.size(), ranges.data()
                 )
         );

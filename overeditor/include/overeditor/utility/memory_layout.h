@@ -110,6 +110,19 @@ namespace overeditor {
     typedef Layout<VertexElement> VertexLayout;
     typedef Layout<LayoutElement> PushConstantsLayout;
 
+    template<typename T>
+    std::string to_string(const Layout<T> layout) {
+        std::string str = "Layout<";
+        str += typeid(T).name();
+        str += ">(";
+        str += "stride: ";
+        str += std::to_string(layout.getStride());
+        str += ", elements: ";
+        str += std::to_string(layout.getElements().size());
+        str += ")";
+        return str;
+    }
+
     namespace layouts {
         vk::DescriptorSetLayout toDescriptorSetLayout(
                 const vk::ShaderStageFlags &stage,

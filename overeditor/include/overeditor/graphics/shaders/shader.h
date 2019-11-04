@@ -103,7 +103,7 @@ namespace overeditor {
 
         const std::vector<vk::DescriptorSetLayout> &getDescriptorsLayouts() const;
 
-        std::vector<const DescriptorLayout *> exportDescriptors() const {
+        std::vector<const DescriptorLayout *> collectDescriptors() const {
             std::vector<const DescriptorLayout *> r;
             auto selector = [&](const overeditor::DescriptorLayout &l) {
                 return &l;

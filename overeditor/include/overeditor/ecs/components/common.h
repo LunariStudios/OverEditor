@@ -112,8 +112,17 @@ public:
 
 struct Drawable {
 public:
+    /**
+     * The geometry of this drawable
+     */
     const overeditor::GeometryBuffer *geometry;
+    /**
+     * The shader used by this drawable
+     */
     const overeditor::Shader *shader;
+    /**
+     * The command pool used to allocate the buffers for different cameras via @see DrawingInstructions
+     */
     const vk::CommandPool pool;
     glm::mat4 model;
 
